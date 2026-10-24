@@ -1,0 +1,27 @@
+# Saved and reviewed PDF-passage answers
+
+In **Analysis & report → Ask about verified PDF passages**, choose **Ask and save PDF passage answer draft** to generate and save a private answer. Ordinary **Ask about PDF passages** remains ephemeral. Saving a draft is an explicit new generation, with the existing excerpt-only OpenAI request, output/citation validation and source/language/analysis checks before and after generation. Draft creation preserves existing memo review, editions and share links.
+
+Each saved answer has an immutable original question/answer/citations/model/prompt/time, frozen cited PDF-evidence entries and attributed review revisions. Sources contain the included selected passages and native/OCR labels, not whole pages/files, raw OCR drafts, permission receipts or PDF-text history. Review edits can change answer text and citations within the frozen evidence. The question and generation provenance cannot be supplied or overwritten by review requests.
+
+## Review and report inclusion
+
+Compare the cited original PDF page and selected excerpt, including OCR transcription. Editing an answer or removing a citation resets review and inclusion in the UI. Review and inclusion are separate choices. The server requires explicit review and at least one exact physical-page/verification/selection citation for report inclusion. A no-citation insufficiency answer may be kept internally but cannot be included.
+
+Only the latest explicitly included, reviewed revision enters memo/report/deck appendices. The projection contains the current question/answer/citations, selected-source snapshots, reviewer/review time, answer revision, original generation provenance and an edited indicator. It does not contain the original answer object or private review history. Public-facing labels and OCR attribution are available in English, Spanish and French. These are researcher-reviewed interpretations of document excerpts, not participant statements, independently verified facts or changes to sample/theme counts. Citation validity is not interpretation-quality validation.
+
+Private-only edits advance the analysis version but preserve published material. Including an answer, editing/withdrawing an included answer or deleting one clears editions/snapshots/share links and resets memo review. Review the memo and create new report editions/links after changes. Original records/history remain private in the analysis until answer/source deletion.
+
+## Bounds and access
+
+The internal `pdf-qa` endpoint accepts optional `saveDraft`; it rejects client answer/provenance/source data. `PUT`/`DELETE /api/studies/:id/pdf-answers` requires workspace edit authority and exact analysis/answer identities and versions, including concept/revision scope. Review citations must match both live current selected evidence and frozen source snapshots. Report generation, viewing, sharing and deck exports verify the exact latest included projection against its source analysis and live PDF evidence. Client report fields cannot replace saved attribution.
+
+Limits are 20 saved passage answers per analysis, 50 revisions per answer and 250,000 serialized characters across passage-answer records. Ordinary Q&A remains available when the saved-record cap is reached. Failed generation or rejected reviews do not partially change saved content or revoke reports. Saving a private draft increments the analysis version; reloading after a lost response avoids silently generating duplicate drafts. There is no automatic retry or idempotency key for answer generation in this stage.
+
+PDF/context/response erasure and retention use existing analysis cleanup to remove originals, frozen sources and review history and revoke derived reports. OCR acceptance or selected-passage changes also clear the analysis through existing evidence invalidation. Participant projections, external API and MCP DTOs do not expose these saved records. Email/domain setup and human research-quality/pilot review remain deferred.
+
+## Verification and next
+
+Unit/HTTP checks cover frozen page/OCR sources, exact citations, immutable originals/history, separate inclusion/review, attribution and localized exports, optimistic writes, read-only/anonymous/workspace and strict metadata gates, private-edit preservation, no-citation and storage/history limits, provider failure, report/deck projection, client attribution forgery and source erasure. Mobile checks cover explicit save/reload, original-page viewing, OCR labels, editing resetting review/inclusion, history, report/source links, withdrawal and deletion. Local/browser generation uses marked fixtures; real hosted generation and cleanup are recorded in the deployment log.
+
+[Correction revisions for verified OCR text](pdf-ocr-corrections.md) are implemented. [Private DOCX participant uploads and researcher review](participant-docx.md) are implemented. [Verified DOCX text selections with paragraph citations](docx-text.md) are implemented. [Verified DOCX passages in analysis and report appendices](docx-evidence.md) are implemented. [AI synthesis of included verified DOCX passages](docx-synthesis.md) is implemented. [Researcher Q&A over included verified DOCX passages](docx-qa.md) is implemented. [Saved and reviewed DOCX Q&A report appendices](docx-answer-reviews.md) are implemented. [Optional DOCX-aware AI interview follow-ups](participant-docx-ai.md) are implemented. Next for approval: **researcher DOCX follow-up grounding reviews and correction history (F12)**.

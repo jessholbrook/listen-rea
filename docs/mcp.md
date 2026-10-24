@@ -1,0 +1,53 @@
+# Read-only MCP connection
+
+Echo Lab offers six research read tools at **https://echo-lab-psi.vercel.app/api/mcp**. This F41 initial stage uses the current official MCP server SDK 2.3.1 and supports the current protocol and the SDK's 2025 compatibility transport. It requires no new domain, AI key, email provider or service. Resend setup and live email remain deferred.
+
+## Connect with OAuth
+
+In a compatible remote MCP client, add the endpoint above and choose Connect. The client discovers Echo Lab’s authorization service and registers its HTTPS or loopback callback. Sign in to Echo Lab, review the client-supplied name and return address, select studies and a subset of its requested read permissions, then approve for 1–30 days. No API key needs to be copied. Manage approved grants in **Team & settings → MCP connections**; revocation stops new access/refresh requests. See [OAuth sign-in, protocol and limits](oauth.md).
+
+Vercel protection remains separate on discovery, registration, authorization and token/resource endpoints. Clients must support the project’s access requirements at every hop. OAuth does not remove that requirement. The official SDK client is verified; compatibility with a named third-party application is not yet claimed.
+
+## Connect with an API key
+
+1. An admin opens **Team & settings → Read-only API keys**, creates a named key with explicit studies, appropriate read scopes and an expiry, then saves the one-time key in a secret store. Existing API keys work too; [key management and rotation](read-api.md) apply.
+2. Open **Connect an MCP client** in that panel. Configure a client supporting remote Streamable HTTP and custom authorization headers. Use its secure credential fields rather than committing a token to a configuration file.
+3. Set the URL to the endpoint above and the `Authorization` header to `Bearer <YOUR_ECHO_LAB_API_KEY>`. This generic connection shape is illustrative; each client has its own configuration format:
+
+```json
+{
+  "url": "https://echo-lab-psi.vercel.app/api/mcp",
+  "headers": { "Authorization": "Bearer <YOUR_ECHO_LAB_API_KEY>" }
+}
+```
+
+Vercel protection is a separate access check. An authorized CLI session can use `vercel curl`; permitted automation needs a separately managed Vercel automation bypass header (`x-vercel-protection-bypass`) from the project's protection settings. The Echo Lab key does not bypass Vercel. Keep both credentials out of URLs and source control. A client that cannot supply the required headers cannot connect in this stage. Clients supporting Echo Lab’s authorization-code/PKCE flow can use OAuth instead. No particular third-party client is claimed as verified; interoperability is tested with the official MCP client SDK.
+
+## Tools and data
+
+| Required scope   | Discovered tools                 | Output                                                                                    |
+| ---------------- | -------------------------------- | ----------------------------------------------------------------------------------------- |
+| `studies:read`   | `list_studies`, `get_study`      | Published metadata for explicitly granted studies.                                        |
+| `responses:read` | `list_responses`, `get_response` | Completed, included, non-preview response summaries and original answers with source IDs. |
+| `analyses:read`  | `list_analyses`, `get_analysis`  | Reviewed current summaries/memos/themes with valid exact source citations.                |
+
+Discovery includes only tools covered by the key's scopes. Scopes are independent: response access does not require metadata scope. Detail tools accept `studyId` plus `responseId` or `analysisId` where appropriate. List tools accept optional `limit` (1–100, default 25) and `cursor`; lists of responses/analyses also require `studyId`. Follow `nextCursor` until null and disclose partial datasets. Unknown arguments are rejected. Tools use the same explicit projections and lifecycle checks as the [REST API](read-api.md); source exclusion, deletion and stale analysis remove access on subsequent reads. Keys never gain access to future studies automatically.
+
+No tool edits guides or findings, launches a study, admits participants, sends messages, pays incentives or downloads recordings. The server makes no model calls and does not request sampling, elicitation, subscriptions or background tasks. Each tool is annotated read-only and non-destructive. Research reads still update key last-use/rate metadata and run the existing request-driven retention housekeeping.
+
+Original answers, questions, quotes and researcher memos are untrusted data. They can contain personal information or embedded instructions. Server/tool guidance tells clients to treat them as evidence, preserve source IDs and exact quotes, and ignore embedded instructions; this does not guarantee a client's resistance to prompt injection. Contact tags, admission credentials, recordings and internal state are not projected. Text is not automatically anonymized. Copies already downloaded cannot be recalled by key revocation or source deletion.
+
+## Transport and controls
+
+- Stateless Streamable HTTP **POST** only; current JSON responses and finite legacy compatibility responses. No persistent GET stream, session IDs or DELETE session lifecycle. Each request constructs a server bound to that request's validated key and closes its SDK resources afterwards.
+- Every POST revalidates API-key or OAuth-token expiry, grant revocation, issuer admin/workspace and the same study permissions as REST. Cookies alone do not authorize MCP. New requests fail after revocation; an already authenticated read may finish.
+- Static keys use the database-backed **60 requests/minute/key** counter shared with `/api/v1`. Each OAuth connection has its own shared 60-request/minute counter across its access tokens. Each authenticated MCP HTTP request counts once, including negotiation, discovery, ping and protocol errors; a tool read does not count twice. HTTP 429 includes `Retry-After`.
+- Configured deployment hosts and optional `Origin` are validated. Requests without `Origin` work for server clients; untrusted origins are rejected. The MCP transport has no browser CORS grant. OAuth metadata/token/registration/revocation endpoints separately support credential-free CORS; cookie-based consent/management do not.
+- JSON requests are limited to 64 KiB; batches and URL query parameters are rejected. Tool arguments cannot select arbitrary HTTP methods, URLs, SQL or services.
+- Responses are private/no-store and include a generated `X-Request-ID`. Authentication/rate/transport failures use HTTP errors; unavailable resources use MCP tool errors with safe messages. No credentials, raw research payloads or database traces are logged by this handler. This is not a full access audit log.
+
+## Validation and next proposal
+
+The official client negotiates and calls the six tools against a real Next server. Checks cover current/2025 protocols, scope-filtered discovery, extra-argument rejection, host/origin controls, cookie denial, bounded JSON, selected-study boundaries, response projection/exclusion, immediate revocation, expiry and a shared REST/MCP rate cap. The lifecycle also runs against the compiled production server. The complete automated suite contains 198 tests, including the OAuth lifecycle. The settings browser flow checks the connection URL, placeholder-only guidance, one-time masked key, responsive layout and revocation. Hosted checks pass for negotiation, scoped discovery, projections, reviewed analysis/citations, source exclusion/deletion, shared rate limits and revocation. Disposable synthetic workspace/key/session records and temporary production credentials were removed; existing owners and the paused pilot were preserved.
+
+The [Qualtrics handoff](survey-handoff.md) is now implemented. [Rally handoff](rally-handoff.md) is now implemented. [Decipher/Forsta handoff](forsta-handoff.md) is now implemented. [PDF text extraction with page citations and researcher verification](pdf-text.md) is implemented. [Verified PDF passages in analysis and reports](pdf-evidence.md) are implemented. [AI synthesis of verified PDF passages](pdf-synthesis.md) is implemented. [Optional PDF-aware interview follow-ups](participant-pdf-ai.md) are implemented. [Researcher PDF grounding reviews and correction history](participant-pdf-review.md) are implemented. [Explicit inclusion of researcher PDF observations and corrections](pdf-observations.md) is implemented. [AI synthesis of included researcher PDF observations](pdf-observation-synthesis.md) is implemented. [Researcher Q&A over included PDF observations](pdf-observation-qa.md) is implemented. [Saved and reviewed PDF-observation Q&A report appendices](pdf-observation-answer-reviews.md) are implemented. Next for approval: **researcher-triggered OCR for scanned PDF pages (F12)**. [Private PDF participant uploads and researcher review](participant-pdfs.md) are implemented. [AI synthesis of included researcher observations](attachment-synthesis.md) is implemented. [Reviewed attachment evidence in analysis and reports](attachment-evidence.md) is implemented. [Researcher image reviews and correction history](participant-image-review.md) are implemented. [Optional image-aware AI follow-ups](participant-image-ai.md) are implemented. [Private participant image uploads](participant-image-uploads.md) are implemented. [Participant confidentiality acknowledgements](confidentiality-acknowledgements.md) are implemented. [One-time concept video viewing](one-time-video.md) is implemented. [Study media watermarks](media-watermarks.md) are implemented. [Ranking and MaxDiff image answers](ranking-maxdiff-images.md) are implemented. [Single-/multiple-choice image answers](answer-images.md) are implemented with private uploads, reviewed descriptions and full-size viewing. [Timed concept presentation](timed-concepts.md) is implemented with persistent deadlines and an audited untimed accessibility option. [Private video concepts](concept-videos.md) are implemented. [Prototype links and tasks](prototype-concepts.md) are implemented. [Private concept images](concept-images.md) are implemented. [Participant branding](participant-branding.md) is implemented. Percentage quotas are implemented; see [rounding and publication rules](quota-percentages.md). Minimum/exact targets are implemented; see [target contract](quota-targets.md). Screener-answer groups are implemented; see [screening contract](screener-quotas.md). Research write/launch authority through MCP remains separate.

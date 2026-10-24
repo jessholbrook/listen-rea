@@ -1,0 +1,12 @@
+{
+  "id": "synthetic-home-support-v1",
+  "kind": "synthetic-ground-truth",
+  "durationMs": 4000,
+  "fps": 12,
+  "states": [
+    {"startMs": 0, "endMs": 1500, "heading": "HOME", "button": "HELP", "headerColor": [37,60,115]},
+    {"startMs": 1500, "endMs": 4000, "heading": "SUPPORT", "button": "CONTACT", "headerColor": [35,88,67]}
+  ],
+  "unobserved": ["click count", "input device", "user intent", "task success", "narrated claims", "real participant behavior"],
+  "acceptance": "Validate decoded frame content and timestamp alignment against these constructed states. This is not a human behavior or model-quality benchmark."
+}

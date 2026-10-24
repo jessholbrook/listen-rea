@@ -1,0 +1,23 @@
+# Image-based answer options
+
+Single-select, multiple-select and ranking questions can include a private image alongside each visible text label. In Study design, select a question, open **Answer image for option …**, upload a static PNG, JPEG or WebP up to 2 MB, and enter **Answer image description**. Save and publish for new interviews. Descriptions should convey the information needed to choose the answer; labels remain required. Images are normalized to static PNG, bounded to 1600 × 1600 without enlargement, with a 3 MB prepared-output limit. The existing per-study 100-image limit includes concept and answer uploads.
+
+Participants see uncropped images and native radio/checkbox controls. **View full image** opens a modal dialog with keyboard focus, Escape/close controls and the image description. Loading failures offer a localized retry; labels remain available and answers are not automatically excluded or blocked. Researchers should check image availability and accessibility before a real study. English, Spanish and French controls and reviewed translations cover labels and image descriptions. This stage does not translate text baked into image pixels; use appropriate images and descriptions for the audience.
+
+Randomization preserves each image's option ID and label. Single-/multiple-choice carry-forward keeps images with the selected or unselected options. Ranking carry-forward retains images; matrix carry-forward retains text and IDs only. [Ranking and MaxDiff image answers](ranking-maxdiff-images.md) extend private images to those methods. Matrix rows and card-sort cards remain text only. Conditional routing, screener quotas, answer storage, exports and analysis continue to use existing option IDs and text labels; no image recognition, image-based scoring or new response type is introduced.
+
+## Private access and versions
+
+Uploads use the existing private image store and researcher image library. Participant bytes require an interview token at `/api/interviews/:id/option-images/:assetId`, an active source, and an image among the current question's saved available options or current MaxDiff task items. Future or previous options, options excluded by carry-forward, and completed/stopped/deleted sources cannot fetch new bytes. Participant guide and assignment projections omit image references/descriptions outside the answerable current question. For timed concepts, answer images become available only when the exposure has expired or the participant has chosen untimed viewing; they remain separate from the timed stimulus.
+
+Published guides, preview snapshots and existing interviews keep their original image references. Draft replacements and later publications do not rewrite them. Study/workspace validation, immutable upload retry IDs, metadata-stripping normalization and private no-store responses follow the [concept image contract](concept-images.md). Saved drafts, history, revisions, interviews, copies and trackers protect retained assets from deletion. Removing an image only detaches it from new guide use; unused unreferenced uploads can be deleted in **Uploaded images**. Copies within a workspace can retain asset references; cross-workspace references are rejected. Participants may retain bytes already received; this is access control, not DRM or screenshot prevention.
+
+## Verification and next item
+
+Tests cover schema bounds, required labels/descriptions, translation identity, shuffled assignments, carry-forward, current-only projections, private byte gates, workspace rejection, invalid-save rollback, immutable source images, retained-image deletion protection, source revocation and timing boundaries. Browser checks cover upload recovery, private decoded pixels, single-/multiple-choice display, full-image keyboard interaction, reloads, reviewed English/Spanish/French and dark/mobile layout.
+
+All 161 automated tests, strict TypeScript, production compilation, two compiled-server image-answer lifecycle checks and the EN/ES/FR image-answer browser pass. Hosted and regression results are recorded in the [deployment notes](vercel-deployment.md).
+
+Source reviewed October 20, 2026: [Listen Labs image answers to quant questions](https://listenlabs.com/whatsnew/image-answers-to-quant-questions) announces multiple choice, ranking and MaxDiff image answers with full-size viewing. Echo Lab now supports single/multiple choice, ranking and MaxDiff; storage, accessibility, timing and retention behavior are its own contract.
+
+[Study media watermarks](media-watermarks.md) are implemented. [One-time concept video viewing](one-time-video.md) is implemented. Next proposed build for approval: **participant confidentiality acknowledgements (F11)**.
