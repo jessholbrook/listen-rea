@@ -81,6 +81,7 @@ export type LibraryRecording = {
     completed: { text: string; model: string; generatedAt: string }[];
   };
   attempt?: { id: string; at: number };
+  backgroundJobId?: string;
   original?: { text: string; model: string; generatedAt: string };
   history?: {
     version: number;
@@ -126,7 +127,7 @@ export const recordingLabels = {
     title: "Recording transcription",
     language: "Recording language",
     notice:
-      "Upload a private audio/video file up to 60 MiB and 60 minutes in resumable private parts. Transcription saves each five-minute step; keep this page open to continue, or resume later. Reselect the same file to resume an interrupted upload. The complete transcript is limited to 150,000 characters. Transcription sends audio only to OpenAI when you explicitly request it. Check the original recording, speaker text and accuracy, edit the draft, then separately approve an import. Drafts stay out of search and analysis. No automatic speaker identity, diarization or reliable timestamps are claimed. Pending recordings expire after seven days or the shorter workspace retention period.",
+      "Upload a private audio/video file up to 60 MiB and 60 minutes in resumable private parts. Transcription saves each five-minute step. Choose background processing to continue after closing this page; the original transcript button requires this page to stay open. Reselect the same file to resume an interrupted upload. The complete transcript is limited to 150,000 characters. Transcription sends audio only to OpenAI when you explicitly request it. Check the original recording, speaker text and accuracy, edit the draft, then separately approve an import. Drafts stay out of search and analysis. No automatic speaker identity, diarization or reliable timestamps are claimed. Pending recordings expire after seven days or the shorter workspace retention period.",
     permission:
       "I have permission to store and process this recording, including sending its audio to OpenAI",
     name: "Recording title",

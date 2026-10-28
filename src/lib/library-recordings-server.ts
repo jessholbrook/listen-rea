@@ -1,3 +1,4 @@
+import { assertBackgroundPermission } from "./background-fence";
 import { z } from "zod";
 import { validateRecordingSections } from "./recording-sections";
 import {
@@ -105,6 +106,7 @@ export async function dispatchLibraryRecordings(
   p: string[],
   a: Actor,
   transcribe: typeof transcribeExternalRecording = transcribeExternalRecording,
+  backgroundJobId?: string,
 ) {
   if (p[1] !== "recordings") return null;
   const canWrite = ["admin", "researcher", "collaborator"].includes(a.role);
@@ -393,6 +395,14 @@ export async function dispatchLibraryRecordings(
     const attempt = uid();
     r = await transaction(async () => {
       const current = await requireRecording(a, id);
+      if (
+        current.backgroundJobId &&
+        current.backgroundJobId !== backgroundJobId
+      )
+        fail(
+          409,
+          "This recording is controlled by a background job. Cancel it first.",
+        );
       if (current.version !== input.version)
         fail(409, "Recording changed. Refresh first.");
       if (current.original)
@@ -430,6 +440,8 @@ export async function dispatchLibraryRecordings(
         const current = await requireRecording(a, id);
         if (current.attempt?.id !== attempt || current.version !== r.version)
           fail(409, "Recording changed during transcription.");
+        if (backgroundJobId)
+          await assertBackgroundPermission(backgroundJobId, a.workspaceId);
         current.job!.completed.push(valid);
         const text = current.job!.completed.map((c) => c.text).join("\n\n");
         if (text.length > maxImportTranscript)

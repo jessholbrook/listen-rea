@@ -1,15 +1,23 @@
 import { db, list, put, uid, now } from "./db";
 import type { Study } from "./domain";
 import type { RenderJob } from "./reporting";
-export async function queueRenderDeletion(s: Study, files: string[]) {
-  if (files.length)
+export async function queueRenderDeletion(
+  s: Study,
+  files: string[],
+  notBefore?: number,
+) {
+  if (files.length) {
+    const id = uid();
     await put("deletion", {
-      id: uid(),
+      id,
       workspaceId: s.workspaceId,
       studyId: s.id,
       files: [...new Set(files)],
       createdAt: now(),
+      ...(notBefore ? { notBefore } : {}),
     });
+    return id;
+  }
 }
 export async function clearReporting(s: Study) {
   const jobs = await list<RenderJob>("renderJob", s.workspaceId, s.id);
@@ -17,6 +25,11 @@ export async function clearReporting(s: Study) {
     s,
     jobs.flatMap((j) => (j.outputId ? [j.outputId] : [])),
   );
+  await db
+    .prepare(
+      "DELETE FROM documents WHERE kind='backgroundJob' AND workspace_id=? AND study_id=? AND json_extract(data,'$.kind')='render'",
+    )
+    .run(s.workspaceId, s.id);
   await db
     .prepare(
       "DELETE FROM documents WHERE workspace_id=? AND study_id=? AND kind IN ('reportEdition','reportSnapshot','mediaClip','mediaReel','renderJob')",

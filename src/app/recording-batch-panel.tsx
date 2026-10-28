@@ -6,6 +6,8 @@ import {
   uploadRecordingParts,
   type RecordingDetail as Detail,
 } from "@/lib/library-recording-upload-client";
+import { backgroundLabels } from "@/lib/background-jobs";
+import BackgroundJobsPanel from "./background-jobs-panel";
 import { batchLabels } from "@/lib/recording-batches";
 import type { Language } from "@/lib/localization";
 type Row = Pick<
@@ -362,6 +364,50 @@ export default function RecordingBatchPanel({
           >
             {l.transcribe}
           </button>
+          <button
+            disabled={disabled || !canEdit}
+            onClick={() =>
+              void run(async (signal) => {
+                for (const item of items) {
+                  if (pause.current || signal.aborted) break;
+                  const r = (
+                    await api<{ recording: Detail }>(
+                      `library/recordings/${item.id}`,
+                      "GET",
+                      undefined,
+                      undefined,
+                      signal,
+                    )
+                  ).recording;
+                  if (
+                    !r.file ||
+                    r.original ||
+                    r.backgroundJobId ||
+                    r.status === "imported"
+                  )
+                    continue;
+                  await api(
+                    "background-jobs",
+                    "POST",
+                    {
+                      requestId: crypto.randomUUID(),
+                      kind: "transcription",
+                      targetId: r.id,
+                      studyId: r.studyId,
+                      version: r.version,
+                      permissionConfirmed: true,
+                    },
+                    undefined,
+                    signal,
+                  );
+                }
+                await load(signal);
+              })
+            }
+          >
+            {backgroundLabels[language].start}
+          </button>
+          <BackgroundJobsPanel language={language} studyId={study} />
           {items.some(
             (r) => r.status === "awaiting_upload" && files.current.has(r.id),
           ) && (

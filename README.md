@@ -140,3 +140,5 @@ Researchers can [ask questions over included PDF notes/corrections](docs/pdf-obs
 PDF-observation answers support [private drafts, review history and explicit report inclusion](docs/pdf-observation-answer-reviews.md).
 
 Remaining engineering bundles and deferred validation are summarized in [remaining work](docs/remaining-work.md).
+
+[Background processing](docs/background-processing.md) is live: native transcription/render workers, progress, cancellation, retry/recovery and daily retention cleanup. Uploads must finish before closing the page. The next proposed milestone is advanced research methods.

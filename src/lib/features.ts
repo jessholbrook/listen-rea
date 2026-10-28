@@ -224,6 +224,11 @@ async function purge(i: Interview) {
     }
     await db
       .prepare(
+        "DELETE FROM documents WHERE kind='backgroundJob' AND workspace_id=? AND json_extract(data,'$.targetId') IN (SELECT id FROM documents WHERE kind='libraryRecording' AND workspace_id=? AND json_extract(data,'$.interviewId')=?)",
+      )
+      .run(i.workspaceId, i.workspaceId, i.id);
+    await db
+      .prepare(
         "DELETE FROM documents WHERE kind='libraryRecording' AND workspace_id=? AND json_extract(data,'$.interviewId')=?",
       )
       .run(i.workspaceId, i.id);
@@ -301,8 +306,8 @@ export async function cleanDeletions() {
   }
 }
 let lastRetention = 0;
-export async function retention() {
-  if (Date.now() - lastRetention < 60000) return;
+export async function retention(force = false) {
+  if (!force && Date.now() - lastRetention < 60000) return;
   lastRetention = Date.now();
   await cleanDeletions();
   const days = Math.max(1, Number(process.env.RESEARCH_RETENTION_DAYS || 90));

@@ -1,3 +1,4 @@
+import { dispatchBackgroundJobs } from "./background-jobs-server";
 import {
   dispatchParticipantPPTXs,
   validateParticipantPPTX,
@@ -156,6 +157,8 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
       ok: (await db.prepare("SELECT 1 AS ready").get())?.ready === 1,
       aiConfigured: aiReady(),
     });
+  const background = await dispatchBackgroundJobs(req, p);
+  if (background) return background;
   const timing = await dispatchConceptTiming(req, p);
   if (timing) return timing;
   const conceptVideos = await dispatchConceptVideos(req, p);

@@ -1,4 +1,5 @@
 "use client";
+import BackgroundJobsPanel from "./background-jobs-panel";
 import PPTXEvidencePanel from "./pptx-evidence-panel";
 
 import DOCXObservationsPanel from "./docx-observations-panel";
@@ -357,6 +358,23 @@ export default function ReportingPanel({
                 />
               </section>
               <section className="panel">
+                <BackgroundJobsPanel
+                  studyId={study.id}
+                  targets={data.jobs
+                    .filter(
+                      (j) =>
+                        j.state !== "complete" &&
+                        !j.backgroundJobId &&
+                        j.dataVersion === data.dataVersion,
+                    )
+                    .map((j) => ({
+                      id: j.id,
+                      studyId: study.id,
+                      kind: "render",
+                      version: j.reelVersion,
+                      label: j.name,
+                    }))}
+                />
                 <h3>Render jobs</h3>
                 <p className="muted">
                   Start a queued job or retry a failed one. You can return here
@@ -390,6 +408,7 @@ export default function ReportingPanel({
                               className="button"
                               disabled={
                                 busy ||
+                                !!j.backgroundJobId ||
                                 (j.state === "running" &&
                                   (j.leaseUntil || 0) > Date.now())
                               }

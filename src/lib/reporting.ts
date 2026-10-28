@@ -208,6 +208,7 @@ export type RenderJob = {
   name: string;
   state: "queued" | "running" | "failed" | "complete";
   attempts: number;
+  backgroundJobId?: string;
   outputId?: string;
   durationMs?: number;
   segments?: { clipId: string; startMs: number; endMs: number }[];

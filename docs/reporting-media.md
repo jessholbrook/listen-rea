@@ -53,3 +53,8 @@ Use `npm ci` with Node 24 to install the locked dependencies. The application us
 Next.js bundles PptxGenJS because its ESM entry uses a `.js` extension without declaring ESM in its package metadata. Keep it out of `serverExternalPackages`. After building, run `RESEARCH_TEST_PRODUCTION=1 node --import tsx --test tests/reporting-http.test.ts` to exercise the compiled server, including PowerPoint export and private rendering. The lockfile overrides PptxGenJS’s transitive `image-size` dependency to patched version 2.0.4; the production dependency audit reports no known vulnerabilities.
 
 Sources reviewed October 19, 2026: [Listen Labs clips/reels](https://docs.listenlabs.com/insights-and-reports/clips), [workspace presentation templates](https://docs.listenlabs.com/insights-and-reports/presentation-templates), and the previously inventoried [report editing/editions announcement](https://listenlabs.com/whatsnew/report-editing-and-editions). The announcement currently resolves to the public marketing shell. Echo Lab’s saved style presets, manual caption review and bounded renderer are implementation choices; arbitrary-template analysis and AI reel selection are not claimed as parity.
+
+
+## Background processing — October 28, 2026
+
+The original **Render now** control remains request-driven. Reviewed native render jobs can also be queued through [background jobs](background-processing.md), with progress, cancellation, bounded recovery, current-source validation and delayed private-output guards. Native workers continue after the producer response and browser close.

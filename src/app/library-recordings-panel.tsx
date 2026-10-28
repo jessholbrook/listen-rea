@@ -1,4 +1,5 @@
 "use client";
+import BackgroundJobsPanel from "./background-jobs-panel";
 import { useEffect, useRef, useState } from "react";
 import { uploadRecordingParts } from "@/lib/library-recording-upload-client";
 import RecordingBatchPanel from "./recording-batch-panel";
@@ -509,6 +510,25 @@ export default function LibraryRecordingsPanel({
                 src={"/api/library/recordings/" + selected.id + "/file"}
               />
             ))}
+          {selected.status !== "imported" && (
+            <BackgroundJobsPanel
+              language={language}
+              targetId={selected.id}
+              targets={
+                selected.file && !selected.original && !selected.backgroundJobId
+                  ? [
+                      {
+                        id: selected.id,
+                        studyId: selected.studyId,
+                        kind: "transcription",
+                        version: selected.version,
+                        label: selected.title || l.title,
+                      },
+                    ]
+                  : []
+              }
+            />
+          )}
           {selected.status === "imported" ? (
             <>
               <p>{l.receipt}</p>
@@ -530,6 +550,7 @@ export default function LibraryRecordingsPanel({
                   !canEdit ||
                   !selected.file ||
                   !!selected.original ||
+                  !!selected.backgroundJobId ||
                   (selected.runningSince !== undefined &&
                     Date.now() - selected.runningSince < 120000)
                 }
