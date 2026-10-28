@@ -1,3 +1,4 @@
+import { assertBackgroundPermission } from "./background-fence";
 import { verifyPPTXEvidence } from "./pptx-evidence-server";
 import type { PPTXEvidence } from "./pptx-evidence";
 import { verifyDOCXObservations } from "./docx-observations-server";
@@ -390,12 +391,18 @@ async function deleteJobs(s: Study, predicate: (j: RenderJob) => boolean) {
     s,
     jobs.flatMap((j) => (j.outputId ? [j.outputId] : [])),
   );
-  for (const j of jobs)
+  for (const j of jobs) {
+    await db
+      .prepare(
+        "DELETE FROM documents WHERE kind='backgroundJob' AND workspace_id=? AND json_extract(data,'$.targetId')=?",
+      )
+      .run(s.workspaceId, j.id);
     await db
       .prepare(
         "DELETE FROM documents WHERE kind='renderJob' AND id=? AND workspace_id=?",
       )
       .run(j.id, s.workspaceId);
+  }
   await revoke(s);
 }
 function attachment(bytes: Buffer, mime: string, name: string) {
@@ -431,6 +438,8 @@ function vtt(clips: MediaClip[], segments?: RenderJob["segments"]) {
 export async function dispatchReporting(
   req: Request,
   p: string[],
+  backgroundActor?: Actor,
+  backgroundJobId?: string,
 ): Promise<Response | null> {
   const method = req.method;
   if (p[0] === "shared" && p[1] && method === "GET") {
@@ -525,7 +534,7 @@ export async function dispatchReporting(
   }
   if (p[0] !== "studies" || !p[1] || p[2] !== "reporting") return null;
   await retention();
-  const a = await actor(),
+  const a = backgroundActor || (await actor()),
     s = await requireStudy(p[1], a),
     resource = p[3],
     id = p[4],
@@ -1199,9 +1208,15 @@ export async function dispatchReporting(
     let claimed: RenderJob | undefined,
       clips: MediaClip[] = [];
     const lease = token();
+    let outputGuard: string | undefined;
     await transaction(async () => {
       const current = await requireStudy(s.id, a),
         v = await verifiedJob(current, id);
+      if (v.job.backgroundJobId && v.job.backgroundJobId !== backgroundJobId)
+        fail(
+          409,
+          "This render is controlled by a background job. Cancel it first.",
+        );
       if (v.job.state === "complete") {
         claimed = v.job;
         return;
@@ -1234,6 +1249,11 @@ export async function dispatchReporting(
         updatedAt: now(),
       };
       clips = v.clips;
+      outputGuard = await queueRenderDeletion(
+        current,
+        [claimed.outputId!],
+        Date.now() + 180000,
+      );
       await put("renderJob", claimed);
     });
     if (claimed!.state === "complete") return respond({ job: claimed });
@@ -1247,6 +1267,8 @@ export async function dispatchReporting(
           v = await verifiedJob(current, id);
         if (v.job.lease !== lease || v.job.state !== "running")
           fail(409, "This render was superseded.");
+        if (backgroundJobId)
+          await assertBackgroundPermission(backgroundJobId, a.workspaceId);
         Object.assign(v.job, {
           state: "complete",
           durationMs: output.durationMs,
@@ -1257,6 +1279,12 @@ export async function dispatchReporting(
           updatedAt: now(),
         });
         await put("renderJob", v.job);
+        if (outputGuard)
+          await db
+            .prepare(
+              "DELETE FROM documents WHERE kind='deletion' AND id=? AND workspace_id=?",
+            )
+            .run(outputGuard, s.workspaceId);
         claimed = v.job;
       });
     } catch (e) {
@@ -1266,6 +1294,12 @@ export async function dispatchReporting(
           s,
           claimed?.outputId ? [claimed.outputId] : [],
         );
+        if (outputGuard)
+          await db
+            .prepare(
+              "DELETE FROM documents WHERE kind='deletion' AND id=? AND workspace_id=?",
+            )
+            .run(outputGuard, s.workspaceId);
         if (current?.lease === lease) {
           current.state = "failed";
           current.lease = undefined;

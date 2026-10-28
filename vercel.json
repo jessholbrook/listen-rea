@@ -2,5 +2,21 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "installCommand": "npm ci"
+  "installCommand": "npm ci",
+  "functions": {
+    "src/app/api/queues/background/route.ts": {
+      "experimentalTriggers": [
+        {
+          "type": "queue/v2beta",
+          "topic": "echo-lab-work"
+        }
+      ]
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/background-maintenance",
+      "schedule": "0 5 * * *"
+    }
+  ]
 }

@@ -27,6 +27,11 @@ export async function removePendingRecording(r: LibraryRecording) {
         "DELETE FROM documents WHERE kind='libraryRecording' AND id=? AND workspace_id=?",
       )
       .run(r.id, r.workspaceId);
+    await db
+      .prepare(
+        "DELETE FROM documents WHERE kind='backgroundJob' AND workspace_id=? AND json_extract(data,'$.targetId')=?",
+      )
+      .run(r.workspaceId, r.id);
     const files = [
       ...new Set([
         ...(r.file ? [r.file.id] : []),

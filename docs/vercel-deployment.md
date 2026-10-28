@@ -1343,3 +1343,10 @@ Jess approved the two-colleague pilot. Preparation verified the existing study `
 ## Internal pilot deferred again — October 23, 2026
 
 At Jess’s request, pilot admissions were paused again through the authenticated application API. The participant landing API confirms paused fielding. Published guide, draft, two-person limit and existing interviews were preserved. Temporary preparation credentials/session were removed. No application change, redeploy or provider call was needed. Evidence: `test-results/pilot-pause.json`. See [remaining work](remaining-work.md) for expansion options.
+
+
+## Background processing — October 28, 2026
+
+Deployment `dpl_CFRqQFRojqYF8A1dc3rCkTLzHgh6` was independently verified Ready at https://echo-lab-psi.vercel.app with successful health after promotion. Native Vercel Queues Beta uses automatic OIDC with a private consumer in `iad1`. A generated private `CRON_SECRET` is saved as a Production Secret; Vercel reports `/api/cron/background-maintenance` enabled daily at `0 5 * * *` for this exact deployment. The configured timer’s future invocation has not yet been observed; the handler was manually verified with authentication and fails closed without it. No new email/domain or database service was needed.
+
+Production build, TypeScript, 578 compiled tests (zero skipped), nine focused worker cases and three browser suites pass. Hosted verification completed 2026-10-28T23:29:09.013Z: seven groups passed, including independent native transcription with one real provider call, exact create retry, current workspace/reader boundaries, private native MP4 rendering and decoding, authenticated retention/recovery, source erasure and complete synthetic cleanup. Independent private-store detail/list checks show zero files/bytes. Existing accounts and the entire paused pilot were preserved. Temporary credentials, generated secret backup and session state were removed. [Workflow, recovery and limits](background-processing.md) document at-least-once provider caveats, open-page upload requirements and local/self-hosted operation.

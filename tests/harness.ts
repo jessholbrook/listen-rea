@@ -54,6 +54,8 @@ export async function start(
         TURSO_DATABASE_URL: "",
         TURSO_AUTH_TOKEN: "",
         RESEARCH_STORAGE: "local",
+        RESEARCH_BACKGROUND_DRIVER: "manual",
+        CRON_SECRET: "",
         RESEND_API_KEY: "",
         RESEARCH_EMAIL_FROM: options.email ? "research@example.test" : "",
         RESEARCH_EMAIL_REPLY_TO: options.email ? "reply@example.test" : "",

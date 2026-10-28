@@ -1,0 +1,47 @@
+# Background transcription, rendering and cleanup
+
+Open **Research library → Background jobs** for workspace job status. In **Recording transcription → Review recording**, choose the uploaded source, approve background processing and start it. Batch intake can queue its already uploaded recordings; closing the page during batch submission leaves only the jobs already accepted. Uploads still need the page to stay open until complete.
+
+In **Reports & media → Media**, create a reviewed reel and its render job, then choose that job in **Background jobs** and approve processing. The original foreground controls remain available for unqueued sources. A source owned by a background job must be cancelled before using its foreground control. English, Spanish and French job controls support mobile.
+
+Jobs persist in the existing workspace database. Production uses Vercel Queues Beta (`@vercel/queue`) and a private queue-triggered consumer in `iad1`; the browser does not advance the job. Each message contains only a job UUID and delivery generation. Recording titles, transcripts, audio, quotes, actor names, credentials and report content are not copied into queue messages. Job metadata contains source coordinates, creator ID, progress and concurrency state, rather than research snapshots.
+
+## Processing and recovery
+
+Each transcription delivery runs one existing five-minute transcription step. Completed steps stay on the original recording draft and survive retries. The worker schedules the next generation until the complete machine draft is ready. Generating a draft does not review or import it; a researcher still checks the transcript and explicitly approves its import. A render delivery uses the existing reviewed reel, current clip/source validation and private MP4 renderer. Job progress counts saved transcription steps or one completed render.
+
+A transaction permits one active job per source, up to 20 active jobs per workspace, and one expensive worker step per workspace. Exact create-request retries resolve to the same job. Database leases and delivery generations prevent concurrent or stale deliveries from repeating a committed step. If the process dies after the source result commits but before job coordination updates, recovery reconciles that result without calling the provider again. Failed steps stop after three attempts; explicit version-checked retry preserves completed transcription steps. Queue delivery may repeat after a crash, and a provider call whose result never reached storage can be repeated and billed again. This is not an exactly-once provider guarantee.
+
+The requesting member's current workspace and edit role are checked before each step and again inside the original output transaction. Removed or demoted members cannot publish a late result. Other workspace editors can cancel a job. Retrying a job whose original creator lost access requires cancelling it and starting a new job under an eligible member. Readers can inspect current metadata but cannot enqueue, retry or cancel.
+
+**Cancel job** invalidates the worker and the original transcription attempt/render lease. Saved transcription checkpoints remain. A provider call already in flight may finish and incur cost, but a result that arrives after the cancellation fence cannot be committed. Work committed before cancellation is retained. Native renders persist a delayed output-deletion guard before writing bytes; normal completion clears it in the same transaction as publishing the result. A crashed worker therefore cannot leave an untracked output. Cancellation also retains a guard for potentially late writes.
+
+Source removal, response erasure, reel/clip changes that delete native render jobs and study removal revoke dependent job coordination. Delivery of an old message cannot recreate the source. Existing source validation rejects excluded or changed research. Completed downloads are still copies that cannot be recalled.
+
+## Delivery outbox and scheduled maintenance
+
+The database job is saved before queue publication. A failed/uncertain queue publish leaves recoverable metadata; **Retry delivery** republishes the same generation with a queue idempotency key. Writes are never automatically repeated by the browser. The job list prioritizes active work and shows at most 100 jobs in the selected scope.
+
+A daily Vercel Cron invocation at `05:00 UTC` (10 p.m. Pacific during daylight time, 9 p.m. during standard time) runs `/api/cron/background-maintenance`. It requires a private `CRON_SECRET` of at least 32 characters and checks the bearer value using constant-time digests. Missing/invalid credentials fail closed. The route forces the existing retention and private-media cleanup, prunes unavailable source coordinates and republishes up to 100 queued/expired-lease jobs. Active leases are left alone. Completed/cancelled metadata ages out after seven days; failed jobs remain available for explicit recovery or cancellation. Queue messages expire after 24 hours. Daily recovery is a fallback, not a promise of immediate recovery from a queue outage.
+
+No new database service, email provider or domain is needed. Production queue authentication uses Vercel OIDC. Queue operations, function compute and AI calls use the corresponding providers' metering; app usage rows are not a verified dollar-cost ledger. New jobs require an explicit editor action and retain existing recording permissions.
+
+## Local development
+
+The default local adapter uses Next.js `after` to run work after responding; it continues without the browser while the application process remains alive. For independent local processing/restart recovery, run `RESEARCH_BACKGROUND_DRIVER=manual npm run dev` and `npm run worker` against the same private local data directory. The worker loads `.env.local` if present; do not put secrets in command arguments. `npm run worker -- --once` executes one pending step; `--maintenance --once` also runs retention/recovery. Keep the runner alive for automatic continuation. Production uses the native queue consumer instead of this local runner. A self-hosted deployment must schedule its own authenticated maintenance or run the maintenance command.
+
+## Validation
+
+`RESEARCH_TEST_PRODUCTION=1 npm run test:background` covers checkpoint progression, delivery replay, in-flight cancellation, concurrent claims, bounded failures and explicit retry, current-role changes before/during work, workspace boundaries, source erasure, maintenance authentication/recovery, real private MP4 output, native lease cancellation and crash reconciliation. Provider outputs in these local tests are marked fixtures; the MP4 renderer is real.
+
+`RESEARCH_TEST_PRODUCTION=1 npx tsx tests/background-browser.ts` checks English, Spanish and French mobile consent/start controls, status after closing the researcher page, independent worker completion and layout. It uses a marked transcription fixture. Hosted queue delivery and scheduled-maintenance configuration are verified separately before release.
+
+The next proposed milestone for approval is **Advanced research methods**: MaxDiff respondent-level modeling and portfolio optimization, open/hybrid card sorting and automated Pulse wave scheduling. Human pilot and domain-dependent email remain deferred.
+
+## Live release — October 28, 2026
+
+Production **`dpl_CFRqQFRojqYF8A1dc3rCkTLzHgh6`** is Ready at https://echo-lab-psi.vercel.app with successful health. Production build, standalone TypeScript, **578/578 compiled regression tests** (zero skipped), the nine focused worker cases and three browser suites pass. The focused cases also verify forced scheduled retention removes expired pending-source bytes even when normal request retention is throttled.
+
+Hosted native-queue verification completed **2026-10-28T23:29:09.013Z** with seven passing groups and one real transcription provider call. The consumer completed independently after producer responses returned. Exact create retry reused the completed job. Native private MP4 rendering completed and its downloaded bytes decoded successfully. The maintenance handler rejected missing credentials and passed with the configured secret. Vercel independently reports the daily schedule enabled for this exact deployment; its future timer invocation has not yet been observed.
+
+Source erasure removed both job coordinators, source/render records and private bytes. Synthetic records, users and sessions were removed; existing accounts and the full paused pilot were preserved. Independent store detail/list checks both report zero files and zero bytes. Temporary environment/session state and the locally generated maintenance-secret file were removed; the secret remains stored in Vercel. Evidence: `test-results/hosted-background-evaluation.json`, `background-cron-registration.json`, `background-*-browser.log`, `background-full-tests.log` and `background-blob-*.log`.

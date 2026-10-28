@@ -1,4 +1,5 @@
 "use client";
+import BackgroundJobsPanel from "./background-jobs-panel";
 import type { UnifiedViewConfig } from "@/lib/unified-view-config";
 import UnifiedPlanningPanel from "./unified-planning-panel";
 import ResearchOperationsPanel from "./research-operations-panel";
@@ -358,6 +359,7 @@ export default function LibraryPanel({
           ["briefs", "Research briefs"],
           ["imports", "Import interviews"],
           ["recordings", "Recording transcription"],
+          ["jobs", "Background jobs"],
           ["attributes", "Participant attributes"],
         ].map(([id, label]) => (
           <button
@@ -457,6 +459,7 @@ export default function LibraryPanel({
           }}
         />
       )}
+      {data && tab === "jobs" && <BackgroundJobsPanel />}
       {data && tab === "recordings" && (
         <LibraryRecordingsPanel studies={data.studies} openResponse={view} />
       )}
