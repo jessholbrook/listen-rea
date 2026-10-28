@@ -557,7 +557,7 @@ test(
   },
 );
 test(
-  "expired leases reconcile a committed transcript without calling the provider, and outbox publication failure remains recoverable",
+  "expired leases reconcile final/partial commits and interrupted provider attempts; outbox publication remains recoverable",
   { timeout: 120000 },
   async () => {
     const c = await setup();
@@ -592,5 +592,67 @@ test(
     assert.equal((await second.stored())!.dispatchPending, true);
     await second.run(async () => output());
     assert.equal((await second.stored())!.state, "complete");
+    const partial = await setup(2, c);
+    const claiming = (await partial.stored())!;
+    claiming.state = "running";
+    claiming.lease = "crashed-checkpoint-lease";
+    claiming.leaseUntil = Date.now() + 150000;
+    claiming.stepAttempts = 1;
+    claiming.attempts = 1;
+    await c.local.put("backgroundJob", claiming);
+    const committed = await c.service.dispatchLibraryRecordings(
+      new Request(
+        "http://worker/api/library/recordings/" + partial.r.id + "/transcribe",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            version: claiming.targetVersion,
+            permissionConfirmed: true,
+          }),
+        },
+      ),
+      ["library", "recordings", partial.r.id, "transcribe"],
+      c.actor,
+      async () =>
+        output("COMMITTED_PARTIAL_STEP: Keep this original checkpoint."),
+      claiming.id,
+    );
+    assert.equal((await committed!.json()).recording.job.completed, 1);
+    claiming.leaseUntil = Date.now() - 1;
+    await c.local.put("backgroundJob", claiming);
+    let resumedCalls = 0;
+    await partial.run(async (_bytes: any, r: any) => {
+      resumedCalls++;
+      assert.equal(r.job.completed.length, 1);
+      return output("RESUMED_NEXT_STEP: Do not repeat the first checkpoint.");
+    });
+    assert.equal(resumedCalls, 1);
+    assert.equal((await partial.stored())!.state, "complete");
+    assert.equal((await partial.stored())!.completed, 2);
+    for (const interrupted of [true, false]) {
+      const pending = await setup(1, c),
+        active = (await pending.stored())!;
+      const source = await c.local.get<any>(
+        "libraryRecording",
+        pending.r.id,
+        c.actor.workspaceId,
+      );
+      source.version++;
+      source.job = { total: 1, completed: [] };
+      source.status = interrupted ? "transcribing" : "uploaded";
+      if (interrupted)
+        source.attempt = { id: randomUUID(), at: Date.now() - 120001 };
+      else source.lastError = "provider_or_processing";
+      await c.local.put("libraryRecording", source);
+      active.state = "running";
+      active.lease = "crashed-provider-lease";
+      active.leaseUntil = Date.now() - 1;
+      active.stepAttempts = 1;
+      active.attempts = 1;
+      await c.local.put("backgroundJob", active);
+      await pending.run(async () => output());
+      assert.equal((await pending.stored())!.state, "complete");
+      assert.equal((await pending.stored())!.attempts, 2);
+    }
   },
 );

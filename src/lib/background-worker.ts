@@ -77,6 +77,34 @@ export async function runBackgroundMessage(
       await put(backgroundKind, j);
       return;
     }
+    if (j.kind === "transcription" && target.backgroundJobId === j.id) {
+      const r = target as LibraryRecording;
+      const saved = r.job?.completed.length || 0;
+      // The original source transaction may have committed before the worker died.
+      // Checkpoints and attempt/error markers are server-owned, never user-editable.
+      const checkpointAdvanced =
+        saved > j.completed &&
+        saved < j.total &&
+        r.status === "uploaded" &&
+        !r.attempt;
+      const interruptedClaim =
+        saved === j.completed &&
+        r.status === "transcribing" &&
+        !!r.attempt &&
+        Date.now() - r.attempt.at >= 120000;
+      const recordedFailure =
+        saved === j.completed &&
+        r.status === "uploaded" &&
+        !r.attempt &&
+        r.lastError === "provider_or_processing";
+      if (checkpointAdvanced || interruptedClaim || recordedFailure) {
+        j.targetVersion = r.version;
+        if (checkpointAdvanced) {
+          j.completed = saved;
+          j.stepAttempts = 0;
+        }
+      }
+    }
     if (
       target.backgroundJobId !== j.id ||
       (j.kind === "transcription" &&
