@@ -1,0 +1,23 @@
+# Researcher Q&A over verified DOCX passages
+
+In Analysis, **Ask about verified DOCX passages** uses only the selections explicitly included in that exact analysis/scope. Enter a 5–2,000 character question and choose **Ask about DOCX passages**. The request sends the question, reporting language, selected excerpts and file/verification/paragraph/start/end references to OpenAI. Full documents, unselected paragraphs, original Word bytes, written interview answers, goals, descriptions, reviewer names, private notes and history are excluded.
+
+Every citation must exactly match a complete included selection: DOCX ID, verification revision, prepared paragraph, zero-based UTF-16 start/exclusive end and original-language quote. Partial/invented/combined quotations or foreign/stale references are rejected. The UI shows one-based inclusive character positions, exact source-response/turn links and authorized prepared-paragraph context with the quote highlighted. References describe the prepared text, not Word pages. Valid citations establish source identity, not answer correctness or independent truth.
+
+The model is instructed to treat questions/excerpts as untrusted data, avoid population/count/sensitive-trait inferences, preserve uncertainty and return no citations when evidence is insufficient. Any valid no-citation output is replaced with a fixed English, Spanish or French insufficiency message, suppressing unsupported prose. Questions, answer labels and source controls localize to the analysis reporting language; quotations retain their original language.
+
+## Protocol and state
+
+`POST /api/studies/:studyId/docx-qa` accepts `{id,version,question,saveDraft?}`. Edit authority, exact current analysis identity/version, reporting language and eligible included DOCX sources are checked before generation. Concept/revision scope, completed/non-preview/non-excluded responses, file presence, prepared-text digests, source fingerprints and exact selections use the existing [evidence validation](docx-evidence.md). Source/data/language/analysis checks run again after generation. Stale or conflicting results cannot attach to a newer analysis. Unknown source, provider and review fields and non-Boolean `saveDraft` values are rejected.
+
+Bounds are 100 included files, 150,000 serialized source code units, a 50-second deadline, 2,000 completion tokens, a 6,000-character answer and 20 exact citations. Generation uses `store:false` and at most ten requests per workspace in the existing rate window. Model/prompt/time/question provenance is supplied by the server; provider-supplied metadata is rejected.
+
+Ordinary requests (without `saveDraft:true`) are ephemeral. The application stores no question/answer record and does not update analysis versions/review, report editions/snapshots or share links. Provider usage metadata is recorded separately without the question or answer. Failed generation preserves report state. Clear, reload, navigation and detected analysis/source/scope/version/language changes remove the displayed answer; delayed replies for a prior view are ignored. Source withdrawal/erasure invalidates the underlying analysis and blocks later questions. The browser also revalidates inclusion/source/version before displaying cited paragraph context.
+
+Temporary Q&A answers do not enter participant payloads, external API/MCP DTOs, memo/report appendices or editable decks. These are interpretations of selected document excerpts, not participant statements or verified facts; they do not change participant/theme counts. [Saving and reviewing answers](docx-answer-reviews.md) is an explicit separate choice; only the latest reviewed, explicitly included revision enters reports.
+
+## Validation and next
+
+Unit checks cover exact citations, localized insufficiency, minimal provider payload, bounded non-stored generation, provenance and malformed/unavailable providers. HTTP checks cover role/workspace/participant/source/scope/version/language/eligibility and strict-input gates, provider-failure report preservation, changed private snapshots and source/file/response erasure. Mobile Chromium checks exact citations/context highlighting, source links, EN/ES/FR insufficiency, clear/error/reload and delayed-answer isolation using marked synthetic provider replies. Hosted verification uses real private storage and real supported/unsupported synthetic questions; see the deployment log. Human research-quality/pilot review remains deferred.
+
+[Saved and reviewed DOCX Q&A report appendices](docx-answer-reviews.md) are implemented. [Optional DOCX-aware AI interview follow-ups](participant-docx-ai.md) are implemented. Next for approval: **researcher DOCX follow-up grounding reviews and correction history (F12)**.

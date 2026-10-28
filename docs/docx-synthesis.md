@@ -1,0 +1,25 @@
+# AI synthesis of included verified DOCX passages
+
+After explicitly including [verified DOCX selections](docx-evidence.md) and creating an analysis, choose **Synthesize DOCX passages with AI** in Analysis. This is a separate researcher action; ordinary interview analysis and document upload/verification do not synthesize DOCX text. The request sends only reporting language, file IDs, verification revisions and selected paragraph/start/end/quote references to OpenAI. Full documents, unselected paragraphs, written answers, goals, descriptions, reviewer names, private notes, source hashes and verification history are excluded.
+
+The provider receives instructions to treat excerpts as untrusted data, preserve uncertainty and contradictions, avoid identity/sensitive-trait inference and population/count claims, and explain insufficiency rather than invent context. These are interpretations of prepared excerpts, not interview statements, inspected original Word files or independently verified facts. The request uses non-stored generation, a 50-second deadline and 3,000 completion-token limit. Source bounds are 100 included files and 150,000 serialized code units. There are at most six findings, ten citations per finding and 2,000 limitation characters. Empty findings are valid when evidence is insufficient.
+
+## Citation and provenance contract
+
+Every finding needs a citation that exactly matches one included selection: file ID, verification revision, prepared paragraph, zero-based UTF-16 start, exclusive end and the complete original-language quote. Foreign/stale references, changed offsets/paragraphs, partial or invented quotes and missing citations are rejected. Display/export references show one-based inclusive character positions. This strict validation confirms the cited source, not whether the interpretation follows from it.
+
+Generation saves a private draft with server-controlled model, prompt version and generation timestamp. Researchers can edit titles, interpretations and limitations or remove findings; edits reset the review checkbox. Saving an explicit review attributes researcher ID/name and time. Client-supplied provenance/reviewer fields are rejected; manual review preserves generation provenance. This stage stores the current synthesis with an edited marker, not immutable AI revision history.
+
+`POST`, `PUT` and `DELETE /api/studies/:studyId/docx-synthesis` require edit authority, exact analysis ID/version and eligible, live included evidence in the current concept/revision scope. Requests validate language/source/analysis before generation and recheck data version, source, language and analysis identity/version before saving. Conflicting, stale and foreign requests cannot attach results to a newer analysis. Provider failures and invalid output preserve current analysis and reports. Generation is limited to six requests per workspace in the existing rate window.
+
+## Review, sharing and erasure
+
+Synthesis and memo review are separate. An unreviewed synthesis blocks marking the memo reviewed, edition creation and sharing. Researchers compare exact cited paragraphs with private context/highlighting and transcript links, review the synthesis and then review the memo. Only reviewed synthesis enters shared memo/report and editable-deck appendices. English, Spanish and French labels preserve source-language quotations. Participant payloads and external API/MCP DTOs exclude the synthesis.
+
+Generating, editing, reviewing or discarding synthesis revokes existing report editions/snapshots and share links and resets memo review. Discarding preserves included DOCX evidence. Source-selection changes/withdrawal, file erasure and response purge remove analyses containing synthesis and revoke derived reports through the existing evidence lifecycle. Source checks also run when sharing and exporting. Downloaded exports cannot be recalled.
+
+## Validation and next
+
+Unit checks cover exact source identity/offset/quote validation, insufficiency, minimal provider payload, non-stored bounded requests, server provenance, malformed/unavailable providers and reviewed-only text. HTTP checks cover strict access/metadata/version/source/scope/language gates, separate reviews, citation rejection, report/deck projection, private DTO isolation, failed-generation report preservation, conflicting writes and source/response erasure. Mobile Chromium exercises EN/ES/FR draft/review edits, checkbox reset, citations/context highlighting, source links, report display, edit revocation and discard using marked synthetic generation fixtures. Hosted verification uses real private storage and real generation on synthetic evidence; see the deployment log. Human research-quality/pilot review remains deferred.
+
+[Researcher Q&A over included verified DOCX passages](docx-qa.md) is implemented. [Saved and reviewed DOCX Q&A report appendices](docx-answer-reviews.md) are implemented. [Optional DOCX-aware AI interview follow-ups](participant-docx-ai.md) are implemented. Next for approval: **researcher DOCX follow-up grounding reviews and correction history (F12)**.

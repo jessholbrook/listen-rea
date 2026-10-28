@@ -1,0 +1,13 @@
+.git
+.next*
+.data
+.env*
+node_modules
+test-results
+tests
+coverage
+*.log
+
+scripts
+
+public/pdfjs

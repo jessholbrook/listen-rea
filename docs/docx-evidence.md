@@ -1,0 +1,25 @@
+# Verified DOCX passages in analysis and reports
+
+In **Responses → DOCX text and verified passages**, select exact prepared-paragraph text, check **Include this verified DOCX selection in new analysis and report appendices, including shared reports and exports**, and attest before saving. Inclusion defaults to off, is independent of general document quality/notes, and requires at least one passage. Changing inclusion resets attestation. Previous private verification revisions remain private unless a new revision explicitly includes their selected text.
+
+Only the latest saved, explicitly included selection is eligible. Analysis snapshots copy exact quotes, paragraph/character ranges, file/response/turn IDs, source/digest, published revision/concept and verification revision/reviewer/time. Private quality notes, raw paragraphs, descriptions, original Word bytes and verification history are excluded. Earlier selections are not accumulated. The [verification contract](docx-text.md) describes exact ranges, Unicode offsets, source binding and the 50-revision cap.
+
+These are document excerpts reviewed by a researcher, not interview quotations or verified factual claims. They do not change participant, theme or frequency counts. Analysis includes only completed, non-preview, non-excluded responses and the exact selected concept/published revision scope. Missing attachments, changed question/answer fingerprints, changed prepared-text digests and invalid exact ranges cannot produce evidence. Each analysis is limited to 100 included DOCX records and 150,000 serialized code units; excessive selections must be reduced before analyzing.
+
+## Reports and source access
+
+Analysis and report edition screens have separate **Verified DOCX passages** appendices. Authorized source controls revalidate the saved inclusion/source/version, open the exact prepared paragraph and highlight the quote. Response links open the source transcript/turn. Paragraph numbers refer to the prepared snapshot, not Word pages. Server-rendered memo/report text, local memo downloads and editable deck appendices retain exact source language and paragraph/character references, with English, Spanish and French labels. Deck source notes contain only the included evidence projection.
+
+Normal memo/report review remains required before sharing or exporting. Clients cannot replace source evidence by supplying `docxEvidence` in analysis or edition updates, and document passages cannot be substituted for interview-answer citations. Edition creation/update/restoration, sharing, public report reads and deck export revalidate included sources. External API/MCP DTOs and participant payloads exclude DOCX excerpts and verification metadata. Report inclusion itself makes no provider requests. [Explicit DOCX synthesis](docx-synthesis.md) and [researcher Q&A](docx-qa.md) send only selected excerpts (and the explicit question for Q&A); ordinary interview analysis does not receive DOCX text.
+
+## Inclusion changes and erasure
+
+Saving an included selection, changing its passages or withdrawing inclusion removes the study's analyses, report editions/snapshots and share links and advances its data version. Regenerate and review an analysis/report after saving. Private-only changes preserve existing reports. This invalidation is conservative across study scopes. General private quality-note edits preserve evidence and reports.
+
+File deletion removes private text, quality review and verification history and revokes derived reports while preserving written answers. Whole-response deletion/retention purge removes the same records and reports. Related image/PDF prompt-source redaction clears DOCX verification and derived reports; new explicit verification/inclusion is required. Late writes and stale source references are rejected. Downloaded exports cannot be recalled.
+
+## Validation and next
+
+HTTP checks cover default-off/empty-selection gates, attribution and latest-only projections, private notes/history isolation, unchanged sample/themes, strict source authority, memo/report/deck citations, external DTO isolation, concept/revision/response eligibility, changed source/snapshot rejection, included-edit/withdrawal invalidation, private report preservation and file/response erasure. Unit checks cover localized exact Unicode citations and empty evidence. Mobile Chromium checks English, Spanish and French inclusion/attestation, citations/context highlighting, source links, report appendices, reload and withdrawal/share revocation. Hosted verification uses disposable synthetic data and real private storage; see the deployment log. Human research-quality/pilot review remains deferred.
+
+[AI synthesis of included verified DOCX passages](docx-synthesis.md) is implemented. [Researcher Q&A over included verified DOCX passages](docx-qa.md) is implemented. [Saved and reviewed DOCX Q&A report appendices](docx-answer-reviews.md) are implemented. [Optional DOCX-aware AI interview follow-ups](participant-docx-ai.md) are implemented. Next for approval: **researcher DOCX follow-up grounding reviews and correction history (F12)**.
