@@ -23,6 +23,10 @@ import {
 import {
   automationOperations,
   automationProposal,
+  delegatedDraftProposal,
+  draftDelegationInput,
+  type DraftExecution,
+  type AutomationGrantEvent,
   type AutomationGrant,
   type AutomationPlan,
   type AutomationStudy,
@@ -102,6 +106,20 @@ export async function automationApi(
     return respond({
       study: automationStudy(await scopedStudy(key, z.uuid().parse(p[1]))),
     });
+  if (p[0] === "executions" && p.length === 2 && req.method === "GET") {
+    const execution = await get<DraftExecution>(
+      "automationExecution",
+      z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .parse(p[1]),
+      key.workspaceId,
+    );
+    if (!execution || execution.keyId !== key.id)
+      fail(404, "Draft execution unavailable.");
+    await scopedStudy(key, execution.studyId);
+    return respond({ execution: executionView(execution) });
+  }
   if (p[0] === "plans" && p.length === 2 && req.method === "GET") {
     const plan = await get<AutomationPlan>(
       "automationPlan",
@@ -113,7 +131,11 @@ export async function automationApi(
     if (plan.studyId) await scopedStudy(key, plan.studyId);
     return respond({ plan: planView(plan) });
   }
-  if (p.length !== 1 || p[0] !== "plans" || req.method !== "POST")
+  if (
+    p.length !== 1 ||
+    !["plans", "execute"].includes(p[0]) ||
+    req.method !== "POST"
+  )
     fail(
       405,
       "Use GET for a scoped draft/request or POST to submit a change request.",
@@ -145,6 +167,12 @@ export async function automationApi(
   } catch {
     fail(400, "Invalid JSON request.");
   }
+  if (p[0] === "execute")
+    return executeDelegatedDraft(
+      delegatedDraftProposal.parse(value),
+      key,
+      grant,
+    );
   const input = automationProposal.parse(value);
   if (!grant.operations.includes(input.change.operation))
     fail(403, "This key cannot request that operation.");
@@ -311,6 +339,23 @@ export async function dispatchAutomation(req: Request, p: string[]) {
         available: !k.revokedAt && Date.parse(k.expiresAt) > Date.now(),
       })),
       grants: await list<AutomationGrant>("automationGrant", a.workspaceId),
+      executions: (
+        await list<DraftExecution>("automationExecution", a.workspaceId)
+      )
+        .slice(0, 200)
+        .map((e) => ({
+          id: e.id,
+          studyId: e.studyId,
+          keyName: e.keyName,
+          operation: e.proposal.change.operation,
+          reason: e.proposal.reason,
+          createdAt: e.createdAt,
+          grantVersion: e.grantVersion,
+          result: e.result,
+        })),
+      grantEvents: (
+        await list<AutomationGrantEvent>("automationGrantEvent", a.workspaceId)
+      ).slice(0, 200),
       plans: await Promise.all(
         plans.map(async (plan) => ({
           id: plan.id,
@@ -326,6 +371,15 @@ export async function dispatchAutomation(req: Request, p: string[]) {
         })),
       ),
     });
+  }
+  if (p.length === 3 && p[1] === "executions" && req.method === "GET") {
+    const execution = await get<DraftExecution>(
+      "automationExecution",
+      p[2],
+      a.workspaceId,
+    );
+    if (!execution) fail(404, "Draft execution unavailable.");
+    return respond({ execution: executionView(execution) });
   }
   if (p.length === 3 && p[1] === "plans" && req.method === "GET") {
     const plan = await get<AutomationPlan>(
@@ -345,11 +399,28 @@ export async function dispatchAutomation(req: Request, p: string[]) {
         enabled: z.boolean(),
         operations: z.array(z.enum(automationOperations)).min(1).max(4),
         reviewed: z.literal(true),
+        delegation: draftDelegationInput.optional(),
+        delegationReviewed: z.literal(true).optional(),
       })
       .strict()
       .parse(await body(req));
     if (new Set(input.operations).size !== input.operations.length)
       fail(400, "Choose unique automation permissions.");
+    const delegation = input.delegation || {
+      enabled: false,
+      operations: [],
+      limit24h: 5,
+    };
+    if (
+      delegation.enabled &&
+      (!input.enabled ||
+        !input.delegationReviewed ||
+        delegation.operations.some((op) => !input.operations.includes(op)))
+    )
+      fail(
+        400,
+        "Review automatic draft execution separately and allow each delegated operation.",
+      );
     let grant!: AutomationGrant;
     await transaction(async () => {
       await admin(a);
@@ -367,11 +438,36 @@ export async function dispatchAutomation(req: Request, p: string[]) {
         workspaceId: a.workspaceId,
         enabled: input.enabled,
         operations: input.operations,
+        delegation,
         version: (old?.version || 0) + 1,
         actorId: a.id,
         updatedAt: now(),
       };
       await put("automationGrant", grant);
+      await put("automationGrantEvent", {
+        id: uid(),
+        workspaceId: a.workspaceId,
+        keyId: grant.keyId,
+        version: grant.version,
+        enabled: grant.enabled,
+        operations: grant.operations,
+        delegation,
+        actorId: a.id,
+        actorName: a.name,
+        createdAt: now(),
+      } satisfies AutomationGrantEvent);
+      const events = await list<AutomationGrantEvent>(
+        "automationGrantEvent",
+        a.workspaceId,
+      );
+      for (const event of events
+        .filter((e) => e.keyId === grant.keyId)
+        .slice(100))
+        await db
+          .prepare(
+            "DELETE FROM documents WHERE kind='automationGrantEvent' AND id=? AND workspace_id=?",
+          )
+          .run(event.id, a.workspaceId);
     });
     return respond({ grant });
   }
@@ -515,4 +611,176 @@ export async function dispatchAutomation(req: Request, p: string[]) {
     return respond({ plan: planView(plan) });
   }
   fail(405, "Unsupported automation management operation.");
+}
+
+function executionView(e: DraftExecution) {
+  const { workspaceId, keyId, keyVersion, ...view } = e;
+  return view;
+}
+async function executeDelegatedDraft(
+  input: z.infer<typeof delegatedDraftProposal>,
+  key: ReadApiKey,
+  grant: AutomationGrant,
+) {
+  const id = hash("delegated-draft:" + key.id + ":" + input.requestId),
+    digest = hash(JSON.stringify(input));
+  let execution!: DraftExecution,
+    reused = false;
+  await transaction(async () => {
+    const fresh = await requireGrant(key),
+      delegation = fresh.grant.delegation;
+    if (
+      !delegation?.enabled ||
+      !delegation.operations.includes(input.change.operation) ||
+      !fresh.grant.operations.includes(input.change.operation)
+    )
+      fail(
+        403,
+        "An admin must separately delegate this automatic draft operation.",
+      );
+    const receipt = await get<{ hash: string }>(
+      "automationReceipt",
+      id,
+      key.workspaceId,
+    );
+    if (receipt) {
+      if (receipt.hash !== digest)
+        fail(409, "This execution request ID has different content.");
+      const old = await get<DraftExecution>(
+        "automationExecution",
+        id,
+        key.workspaceId,
+      );
+      if (!old)
+        fail(
+          410,
+          "This execution was erased. The original request cannot be replayed.",
+        );
+      await scopedStudy(fresh.key, old.studyId);
+      execution = old;
+      reused = true;
+      return;
+    }
+    if (
+      fresh.grant.version !== grant.version ||
+      fresh.key.version !== key.version
+    )
+      fail(409, "Automation permissions changed. Read current context again.");
+    const count = await db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM documents WHERE kind='automationReceipt' AND workspace_id=?",
+      )
+      .get(key.workspaceId);
+    if (Number(count?.n) >= 2000)
+      fail(409, "This workspace reached its automation receipt limit.");
+    const recent = await db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM documents WHERE kind='automationReceipt' AND workspace_id=? AND json_extract(data,'$.delegatedKeyHash')=? AND json_extract(data,'$.createdAt')>=?",
+      )
+      .get(
+        key.workspaceId,
+        hash(key.id),
+        new Date(Date.now() - 86400000).toISOString(),
+      );
+    if (Number(recent?.n) >= delegation.limit24h)
+      fail(
+        429,
+        "This key reached its automatic draft change limit for the preceding 24 hours. An admin can disable or review delegation.",
+      );
+    const authorizer = await db
+      .prepare(
+        "SELECT name,email,role FROM users WHERE id=? AND workspace_id=?",
+      )
+      .get(fresh.grant.actorId, key.workspaceId);
+    if (!authorizer || authorizer.role !== "admin")
+      fail(403, "The authorizing admin is unavailable.");
+    // History names the integration, while this record separately retains key/grant and authorizing admin attribution.
+    const integrationActor: Actor = {
+      id: fresh.grant.actorId,
+      workspaceId: key.workspaceId,
+      role: "admin",
+      name: "Integration: " + fresh.key.name,
+      email: String(authorizer.email),
+    };
+    const change = input.change;
+    let s: Study, before: AutomationStudy | undefined;
+    if (change.operation === "create") {
+      if (fresh.key.studyIds.length >= 50)
+        fail(409, "The key cannot receive another created study.");
+      const defaults = await workspaceDefaults(key.workspaceId),
+        guide = guideSchema.parse(change.guide);
+      s = {
+        id: uid(),
+        workspaceId: key.workspaceId,
+        title: guide.title,
+        draft: guide,
+        researchGuidelines: defaults.guidelines,
+        revisionId: null,
+        fielding: "draft",
+        version: 1,
+        dataVersion: 0,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      await validateConceptImages(s, guide);
+      await validateConceptVideos(s, guide);
+      await put("study", s);
+      await saveHistory(s, integrationActor, "created");
+      await put("readApiKey", {
+        ...fresh.key,
+        studyIds: [...fresh.key.studyIds, s.id],
+        version: fresh.key.version + 1,
+      });
+    } else {
+      s = await scopedStudy(fresh.key, change.studyId);
+      before = automationStudy(s);
+      if (before.fingerprint !== change.fingerprint)
+        fail(
+          409,
+          "The study changed. Read its current draft before executing again.",
+        );
+      await validateConceptImages(s, change.guide);
+      await validateConceptVideos(s, change.guide);
+      await ensureHistory(s, integrationActor);
+      s = {
+        ...s,
+        draft: change.guide,
+        title: change.guide.title,
+        version: s.version + 1,
+        updatedAt: now(),
+      };
+      await put("study", s);
+      await saveHistory(s, integrationActor, "saved");
+    }
+    execution = {
+      id,
+      workspaceId: key.workspaceId,
+      studyId: s.id,
+      keyId: key.id,
+      keyName: fresh.key.name,
+      keyVersion: fresh.key.version,
+      grantVersion: fresh.grant.version,
+      authorizedBy: String(authorizer.name),
+      authorizedById: fresh.grant.actorId,
+      proposal: input,
+      ...(before ? { before } : {}),
+      state: "applied",
+      createdAt: now(),
+      result: {
+        studyId: s.id,
+        version: s.version,
+        fielding: s.fielding,
+        revisionId: s.revisionId,
+      },
+    };
+    await put("automationExecution", execution);
+    await put("automationReceipt", {
+      id,
+      workspaceId: key.workspaceId,
+      hash: digest,
+      delegatedKeyHash: hash(key.id),
+      createdAt: execution.createdAt,
+    });
+  });
+  return respond({ execution: executionView(execution) }, reused ? 200 : 201);
 }

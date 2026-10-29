@@ -152,3 +152,5 @@ Remaining engineering bundles and deferred validation are summarized in [remaini
 [Prolific recruitment connector](docs/prolific-recruitment.md) adds reviewed provider drafts, guarded test/paid launch, participant handoff and submission reconciliation. It is unconnected in production and paid launch is disabled by default; real vendor account/testing validation remains outstanding.
 
 [Tremendous sandbox reward links](docs/tremendous-sandbox.md) extend approved incentives for our own invitees. Sandbox orders do not pay real incentives; live payouts are unavailable.
+
+[Delegated draft automation](docs/delegated-draft-automation.md) lets explicitly authorized static integrations create/edit private drafts under admin-selected operations, study scope and rolling limits. Publication and fielding retain their reviewed workflow.

@@ -45,6 +45,7 @@ export type AutomationGrant = {
   workspaceId: string;
   keyId: string;
   enabled: boolean;
+  delegation?: DraftDelegation;
   operations: (typeof automationOperations)[number][];
   version: number;
   updatedAt: string;
@@ -93,4 +94,68 @@ export type AutomationPlan = {
     fielding: string;
     revisionId: string | null;
   };
+};
+
+export const draftOperations = ["create", "edit"] as const;
+export const draftDelegationInput = z
+  .object({
+    enabled: z.boolean(),
+    operations: z.array(z.enum(draftOperations)).max(2),
+    limit24h: z.number().int().min(1).max(50),
+  })
+  .strict()
+  .superRefine((v, ctx) => {
+    if (
+      new Set(v.operations).size !== v.operations.length ||
+      (v.enabled && !v.operations.length)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Choose unique draft operations; enabled delegation requires at least one.",
+      });
+  });
+export type DraftDelegation = z.infer<typeof draftDelegationInput>;
+export const delegatedDraftProposal = automationProposal
+  .extend({
+    change: z.discriminatedUnion("operation", [
+      z.object({ operation: z.literal("create"), guide: guideSchema }).strict(),
+      z
+        .object({
+          operation: z.literal("edit"),
+          studyId: z.uuid(),
+          fingerprint: z.string().length(64),
+          guide: guideSchema,
+        })
+        .strict(),
+    ]),
+  })
+  .strict();
+export type DraftExecution = {
+  id: string;
+  workspaceId: string;
+  studyId: string;
+  keyId: string;
+  keyName: string;
+  grantVersion: number;
+  keyVersion: number;
+  authorizedBy: string;
+  authorizedById: string;
+  proposal: z.infer<typeof delegatedDraftProposal>;
+  before?: AutomationStudy;
+  state: "applied";
+  createdAt: string;
+  result: NonNullable<AutomationPlan["result"]>;
+};
+export type AutomationGrantEvent = {
+  id: string;
+  workspaceId: string;
+  keyId: string;
+  version: number;
+  enabled: boolean;
+  operations: AutomationGrant["operations"];
+  delegation: DraftDelegation;
+  actorId: string;
+  actorName: string;
+  createdAt: string;
 };

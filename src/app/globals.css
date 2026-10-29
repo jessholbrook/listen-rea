@@ -3852,3 +3852,27 @@ tr:last-child td {
   padding-top: 1rem;
   border-top: 1px solid var(--line);
 }
+
+.automation-panel,
+.automation-panel .visual-stack {
+  grid-template-columns: minmax(0, 1fr);
+  overflow-wrap: anywhere;
+}
+.automation-panel :is(article, fieldset, label, details, section, pre) {
+  min-width: 0;
+  max-width: 100%;
+}
+.automation-panel .checkbox-label {
+  white-space: normal;
+  align-items: flex-start;
+  font-size: 12px;
+  gap: 8px;
+}
+.automation-panel .checkbox-label input {
+  flex: 0 0 14px;
+  width: 14px;
+  margin-top: 3px;
+}
+.automation-panel .button {
+  max-width: 100%;
+}

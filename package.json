@@ -95,7 +95,8 @@
     "test:media": "tsx tests/media-expansion-browser.ts",
     "test:automation": "tsx tests/automation-browser.ts",
     "test:prolific": "tsx tests/prolific-browser.ts",
-    "test:tremendous": "tsx tests/tremendous-browser.ts"
+    "test:tremendous": "tsx tests/tremendous-browser.ts",
+    "test:delegation": "tsx tests/delegated-drafts-browser.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",
