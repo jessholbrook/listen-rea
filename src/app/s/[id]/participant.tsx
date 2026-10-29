@@ -66,6 +66,7 @@ export default function Participant({ id }: { id: string }) {
     responseId = useRef<string | null>(null),
     handoffProvider = useRef<HandoffProvider>("qualtrics"),
     externalStudyId = useRef<string | null>(null),
+    providerSessionId = useRef<string | null>(null),
     sessionKey = useRef("study-session:" + id);
   const [destination, setDestination] = useState<{
     url: string;
@@ -115,7 +116,39 @@ export default function Participant({ id }: { id: string }) {
           rids = query.getAll("rid"),
           markers = query.getAll("handoff");
         const forsta = rids.length > 0 || markers[0] === "forsta";
-        if (!preview && forsta) {
+        const prolific =
+          markers[0] === "prolific" ||
+          [...query.keys()].some((k) =>
+            ["prolific_pid", "study_id", "session_id"].includes(
+              k.toLowerCase(),
+            ),
+          );
+        if (!preview && prolific) {
+          const participantIds = query.getAll("PROLIFIC_PID"),
+            studies = query.getAll("STUDY_ID"),
+            sessions = query.getAll("SESSION_ID");
+          if (
+            ids.length ||
+            pids.length ||
+            rallyStudies.length ||
+            rids.length ||
+            markers.length > 1 ||
+            (markers.length === 1 && markers[0] !== "prolific") ||
+            participantIds.length !== 1 ||
+            studies.length !== 1 ||
+            sessions.length !== 1 ||
+            ![participantIds[0], studies[0], sessions[0]].every(
+              (v) => responseIdInput.safeParse(v).success,
+            )
+          )
+            throw Error(
+              "This Prolific link has missing, invalid or mixed identifiers. Contact the research team.",
+            );
+          handoffProvider.current = "prolific";
+          responseId.current = participantIds[0];
+          externalStudyId.current = studies[0];
+          providerSessionId.current = sessions[0];
+        } else if (!preview && forsta) {
           if (
             ids.length ||
             pids.length ||
@@ -171,9 +204,16 @@ export default function Participant({ id }: { id: string }) {
         sessionKey.current = await invitationSessionKey(id, invitation.current);
         if (responseId.current)
           sessionKey.current +=
-            handoffProvider.current === "rally"
-              ? ":rally:" + externalStudyId.current + ":" + responseId.current
-              : ":" + handoffProvider.current + ":" + responseId.current;
+            handoffProvider.current === "prolific"
+              ? ":prolific:" +
+                externalStudyId.current +
+                ":" +
+                responseId.current +
+                ":" +
+                providerSessionId.current
+              : handoffProvider.current === "rally"
+                ? ":rally:" + externalStudyId.current + ":" + responseId.current
+                : ":" + handoffProvider.current + ":" + responseId.current;
         const saved = preview
           ? { id: preview, token: localStorage.getItem("interview:" + preview) }
           : JSON.parse(localStorage.getItem(sessionKey.current) || "null");
@@ -212,6 +252,8 @@ export default function Participant({ id }: { id: string }) {
             handoffProvider.current &&
           (pending.surveyHandoff.externalStudyId || null) ===
             externalStudyId.current &&
+          (pending.surveyHandoff.sessionId || null) ===
+            providerSessionId.current &&
           pending
         ) {
           const r = await api("public/" + id, "POST", pending);
@@ -248,11 +290,13 @@ export default function Participant({ id }: { id: string }) {
         );
         if (
           responseId.current &&
-          !(handoffProvider.current === "rally"
-            ? details.rallyHandoff
-            : handoffProvider.current === "forsta"
-              ? details.forstaHandoff
-              : details.surveyHandoff)
+          !(handoffProvider.current === "prolific"
+            ? details.prolificHandoff
+            : handoffProvider.current === "rally"
+              ? details.rallyHandoff
+              : handoffProvider.current === "forsta"
+                ? details.forstaHandoff
+                : details.surveyHandoff)
         )
           throw new Error(
             "This survey connection is unavailable. Contact the research team.",
@@ -280,9 +324,17 @@ export default function Participant({ id }: { id: string }) {
         if (
           k !== "preview" &&
           k !== "language" &&
-          !["responseid", "pid", "studyid", "rid", "handoff"].includes(
-            k.toLowerCase(),
-          ) &&
+          ![
+            "responseid",
+            "pid",
+            "studyid",
+            "rid",
+            "handoff",
+            "prolific_pid",
+            "study_id",
+            "session_id",
+            "prolific_token",
+          ].includes(k.toLowerCase()) &&
           !["invite", "invitationtoken", "token"].includes(k.toLowerCase()) &&
           k.length <= 100 &&
           v.length <= 500
@@ -295,6 +347,7 @@ export default function Participant({ id }: { id: string }) {
             secret: string;
             provider?: HandoffProvider;
             externalStudyId?: string;
+            sessionId?: string;
           }
         | undefined;
       if (responseId.current) {
@@ -309,11 +362,17 @@ export default function Participant({ id }: { id: string }) {
         surveyHandoff = {
           responseId: responseId.current,
           secret,
-          ...(handoffProvider.current === "rally"
-            ? { provider: "rally", externalStudyId: externalStudyId.current! }
-            : handoffProvider.current === "forsta"
-              ? { provider: "forsta" }
-              : {}),
+          ...(handoffProvider.current === "prolific"
+            ? {
+                provider: "prolific",
+                externalStudyId: externalStudyId.current!,
+                sessionId: providerSessionId.current!,
+              }
+            : handoffProvider.current === "rally"
+              ? { provider: "rally", externalStudyId: externalStudyId.current! }
+              : handoffProvider.current === "forsta"
+                ? { provider: "forsta" }
+                : {}),
         };
       }
       const request = {
@@ -1218,11 +1277,13 @@ export default function Participant({ id }: { id: string }) {
               <div className="survey-return">
                 <p>
                   {t(
-                    destination.provider === "rally"
-                      ? "Continue to the study team’s Rally page at"
-                      : destination.provider === "forsta"
-                        ? "Continue to the study team’s Decipher survey at"
-                        : "Continue to the study team’s survey at",
+                    destination.provider === "prolific"
+                      ? "Continue to Prolific at"
+                      : destination.provider === "rally"
+                        ? "Continue to the study team’s Rally page at"
+                        : destination.provider === "forsta"
+                          ? "Continue to the study team’s Decipher survey at"
+                          : "Continue to the study team’s survey at",
                   )}{" "}
                   <strong>{destination.origin}</strong>.
                 </p>
@@ -1253,11 +1314,13 @@ export default function Participant({ id }: { id: string }) {
                   }}
                 >
                   {t(
-                    destination.provider === "rally"
-                      ? "Continue to Rally"
-                      : destination.provider === "forsta"
-                        ? "Continue to Decipher"
-                        : "Continue to survey",
+                    destination.provider === "prolific"
+                      ? "Continue to Prolific"
+                      : destination.provider === "rally"
+                        ? "Continue to Rally"
+                        : destination.provider === "forsta"
+                          ? "Continue to Decipher"
+                          : "Continue to survey",
                   )}{" "}
                   <ArrowRight size={16} />
                 </button>

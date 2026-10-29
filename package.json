@@ -93,7 +93,8 @@
     "test:advanced": "tsx tests/advanced-methods-browser.ts",
     "test:richer": "tsx tests/richer-browser.ts",
     "test:media": "tsx tests/media-expansion-browser.ts",
-    "test:automation": "tsx tests/automation-browser.ts"
+    "test:automation": "tsx tests/automation-browser.ts",
+    "test:prolific": "tsx tests/prolific-browser.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",

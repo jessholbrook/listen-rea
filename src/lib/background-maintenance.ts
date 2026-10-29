@@ -1,3 +1,4 @@
+import { prolificMaintenance } from "./prolific-queue";
 import { reapRealtime } from "./realtime-server";
 import { runPulseSchedules } from "./pulse-schedule-server";
 import { timingSafeEqual, createHash } from "node:crypto";
@@ -47,5 +48,6 @@ export async function backgroundMaintenance(
     .run(new Date(Date.now() - 7 * 86400000).toISOString());
   await reapRealtime();
   const pulse = await runPulseSchedules();
-  return { ok: true, dispatched, pending, pulse };
+  const prolific = await prolificMaintenance();
+  return { ok: true, dispatched, pending, pulse, prolific };
 }

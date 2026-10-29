@@ -10,12 +10,21 @@ export async function clearResponseHandoff(i: Interview) {
   );
   if (!claim || claim.studyId !== i.studyId || claim.interviewId !== i.id)
     return;
+  if (claim.provider === "prolific") {
+    const { db } = await import("./db");
+    await db
+      .prepare(
+        "DELETE FROM documents WHERE kind='prolificSubmission' AND workspace_id=? AND json_extract(data,'$.claimId')=?",
+      )
+      .run(i.workspaceId, claim.id);
+  }
   // Keep a content-free spent-ID hash to prevent a deleted response being admitted again.
   await put("surveyHandoff", {
     ...claim,
     interviewId: undefined,
     responseId: "",
     externalStudyId: undefined,
+    sessionId: undefined,
     secretHash: undefined,
     fingerprint: undefined,
     routes: { complete: "", screened_out: "", withdrawn: "" },

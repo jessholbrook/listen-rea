@@ -3791,3 +3791,40 @@ tr:last-child td {
 .automation-panel .button {
   white-space: normal;
 }
+
+.prolific-panel fieldset.prolific-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.prolific-panel .button {
+  white-space: normal;
+}
+.prolific-panel td {
+  overflow-wrap: anywhere;
+  max-width: 200px;
+}
+
+.prolific-panel {
+  grid-template-columns: minmax(0, 1fr);
+  overflow-wrap: anywhere;
+}
+.prolific-panel > *,
+.prolific-panel fieldset > * {
+  min-width: 0;
+}
+.prolific-panel .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.prolific-panel {
+  overflow-x: clip;
+}
+.prolific-panel table {
+  min-width: 650px;
+}
+.prolific-panel .table-scroll {
+  max-width: 100%;
+}

@@ -1,5 +1,13 @@
 import type { Language } from "./localization";
 export const participantCopy = {
+  "Continue to Prolific at": {
+    es: "Continuar a Prolific en",
+    fr: "Continuer vers Prolific sur",
+  },
+  "Continue to Prolific": {
+    es: "Continuar a Prolific",
+    fr: "Continuer vers Prolific",
+  },
   "Sharing a PDF does not enable AI interview follow-ups. Remove personal details first.":
     {
       es: "Compartir un PDF no activa las preguntas de seguimiento con IA. Elimina primero los datos personales.",

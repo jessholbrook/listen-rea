@@ -1,3 +1,9 @@
+import {
+  prolificSettings,
+  prolificClaimId,
+  validateProlificAdmission,
+} from "./prolific-admission";
+import type { ProlificConfig } from "./prolific";
 import { createHmac } from "node:crypto";
 import {
   actor,
@@ -37,6 +43,7 @@ export async function handoffSettings(
   s: Study,
   provider: HandoffProvider = "qualtrics",
 ): Promise<HandoffSettings> {
+  if (provider === "prolific") return prolificSettings(s);
   const id = provider === "qualtrics" ? s.id : s.id + ":" + provider;
   return (
     (await get<HandoffSettings>("handoffSettings", id, s.workspaceId)) || {
@@ -52,6 +59,13 @@ export async function handoffSettings(
   );
 }
 function admissionId(s: Study, input: Admission) {
+  if (input.provider === "prolific")
+    return prolificClaimId(
+      s.workspaceId,
+      s.id,
+      input.externalStudyId!,
+      input.responseId,
+    );
   return hash(
     JSON.stringify(
       input.provider === "rally"
@@ -72,15 +86,24 @@ export function handoffToken(s: Study, input: Admission) {
   return createHmac("sha256", Buffer.from(input.secret, "hex"))
     .update(
       JSON.stringify(
-        input.provider === "rally"
+        input.provider === "prolific"
           ? [
-              "rally",
+              "prolific",
               s.workspaceId,
               s.id,
               input.externalStudyId,
               input.responseId,
+              input.sessionId,
             ]
-          : [input.provider, s.workspaceId, s.id, input.responseId],
+          : input.provider === "rally"
+            ? [
+                "rally",
+                s.workspaceId,
+                s.id,
+                input.externalStudyId,
+                input.responseId,
+              ]
+            : [input.provider, s.workspaceId, s.id, input.responseId],
       ),
     )
     .digest("base64url");
@@ -112,6 +135,7 @@ export async function recoverHandoff(
   );
   if (!claim) return null;
   if (
+    (input.provider === "prolific" && claim.sessionId !== input.sessionId) ||
     claim.responseDeletedAt ||
     claim.secretHash !== hash(input.secret) ||
     claim.fingerprint !== fingerprint ||
@@ -143,6 +167,24 @@ export async function claimHandoff(
   fingerprint: string,
 ) {
   const settings = await handoffSettings(s, input.provider);
+  if (input.provider === "prolific") {
+    await validateProlificAdmission(s, input.externalStudyId);
+    const config = (await get<ProlificConfig>(
+      "prolificConfig",
+      s.id,
+      s.workspaceId,
+    ))!;
+    const used = await db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM documents WHERE kind='surveyHandoff' AND workspace_id=? AND study_id=? AND json_extract(data,'$.provider')='prolific'",
+      )
+      .get(s.workspaceId, s.id);
+    if (Number(used?.n) >= config.input.places)
+      fail(
+        409,
+        "The reviewed Prolific allocation is full. Contact the research team.",
+      );
+  }
   if (!settings.enabled)
     fail(
       409,
@@ -185,6 +227,13 @@ export async function claimHandoff(
       ? { provider: "rally" as const, externalStudyId: input.externalStudyId }
       : {}),
     ...(input.provider === "forsta" ? { provider: "forsta" as const } : {}),
+    ...(input.provider === "prolific"
+      ? {
+          provider: "prolific" as const,
+          externalStudyId: input.externalStudyId,
+          sessionId: input.sessionId,
+        }
+      : {}),
     secretHash: hash(input.secret),
     fingerprint,
     configVersion: settings.version,
@@ -214,7 +263,21 @@ export async function dispatchSurveyHandoff(req: Request, p: string[]) {
     );
     if (!claim || claim.studyId !== s.id || claim.interviewId !== i.id)
       return respond({ destination: null });
-    if (!(await handoffSettings(s, claim.provider || "qualtrics")).enabled)
+    if (claim.provider === "prolific") {
+      const cfg = await get<ProlificConfig>(
+        "prolificConfig",
+        s.id,
+        s.workspaceId,
+      );
+      if (
+        !cfg ||
+        cfg.activeId !== claim.externalStudyId ||
+        cfg.revisionId !== i.revisionId
+      )
+        return respond({ destination: null });
+    } else if (
+      !(await handoffSettings(s, claim.provider || "qualtrics")).enabled
+    )
       return respond({ destination: null });
     return respond({ destination: handoffUrl(claim, i.status) });
   }

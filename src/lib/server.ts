@@ -1,3 +1,5 @@
+import { enforceProlificReservation } from "./prolific-admission";
+import { dispatchProlific } from "./prolific-server";
 import { dispatchAutomation } from "./study-automation-server";
 import { dispatchClipSuggestions } from "./clip-suggestions-server";
 import { dispatchPresentationImport } from "./presentation-import-server";
@@ -166,6 +168,8 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
       ok: (await db.prepare("SELECT 1 AS ready").get())?.ready === 1,
       aiConfigured: aiReady(),
     });
+  const prolific = await dispatchProlific(req, p);
+  if (prolific) return prolific;
   const automation = await dispatchAutomation(req, p);
   if (automation) return automation;
   const background = await dispatchBackgroundJobs(req, p);
@@ -612,6 +616,7 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
         surveyHandoff: (await handoffSettings(s)).enabled,
         rallyHandoff: (await handoffSettings(s, "rally")).enabled,
         forstaHandoff: (await handoffSettings(s, "forsta")).enabled,
+        prolificHandoff: (await handoffSettings(s, "prolific")).enabled,
         ai: aiReady(),
       });
     }
@@ -671,6 +676,7 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
         ).length;
         if (reserved >= r.guide.limit)
           fail(409, "This study has reached its participant limit.");
+        await enforceProlificReservation(current, input.surveyHandoff?.provider);
         return await startInterview(
           current,
           r.guide,
@@ -682,7 +688,7 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
             }).filter(
               ([key]) =>
                 !input.surveyHandoff ||
-                !["responseid", "pid", "studyid", "rid"].includes(
+                !["responseid", "pid", "studyid", "rid", "prolific_pid", "study_id", "session_id", "prolific_token"].includes(
                   key.toLowerCase(),
                 ),
             ),

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Interview } from "./domain";
-export type HandoffProvider = "qualtrics" | "rally" | "forsta";
+export type HandoffProvider = "qualtrics" | "rally" | "forsta" | "prolific";
 export const responseIdInput = z
   .string()
   .regex(
@@ -11,16 +11,21 @@ export const handoffAdmissionInput = z
   .object({
     responseId: responseIdInput,
     secret: z.string().regex(/^[0-9a-f]{64}$/),
-    provider: z.enum(["qualtrics", "rally", "forsta"]).default("qualtrics"),
+    provider: z
+      .enum(["qualtrics", "rally", "forsta", "prolific"])
+      .default("qualtrics"),
     externalStudyId: responseIdInput.optional(),
+    sessionId: responseIdInput.optional(),
   })
   .strict()
   .refine(
     (v) =>
-      v.provider === "rally"
-        ? !!v.externalStudyId
-        : v.externalStudyId === undefined,
-    "Rally requires studyID; other providers do not accept a Rally study ID.",
+      v.provider === "prolific"
+        ? !!v.externalStudyId && !!v.sessionId
+        : v.provider === "rally"
+          ? !!v.externalStudyId && !v.sessionId
+          : !v.externalStudyId && !v.sessionId,
+    "Use a study ID for Rally and both study/session IDs for Prolific; do not mix provider identifiers.",
   );
 export const handoffStatuses = [
   "complete",
@@ -217,6 +222,7 @@ export type SurveyHandoff = {
   responseId: string;
   provider?: HandoffProvider;
   externalStudyId?: string;
+  sessionId?: string;
   secretHash?: string;
   fingerprint?: string;
   configVersion: number;
@@ -228,6 +234,25 @@ export function handoffUrl(claim: SurveyHandoff, status: Interview["status"]) {
   if (status === "active" || !claim.responseId || claim.responseDeletedAt)
     return null;
   const saved = claim.routes[status];
+  if (claim.provider === "prolific") {
+    if (!saved) return null;
+    const u = new URL(saved);
+    if (
+      u.origin !== "https://app.prolific.com" ||
+      !["/", "/submissions/complete"].includes(u.pathname) ||
+      u.hash ||
+      u.username ||
+      u.password ||
+      (u.pathname === "/submissions/complete" &&
+        !/^[A-Za-z0-9]+$/.test(u.searchParams.get("cc") || ""))
+    )
+      return null;
+    return {
+      url: u.toString(),
+      origin: u.origin,
+      provider: "prolific" as const,
+    };
+  }
   if (claim.provider === "forsta") {
     if (!saved || !validForstaUrl(saved)) return null;
     const url = new URL(saved);
