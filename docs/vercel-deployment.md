@@ -1373,3 +1373,25 @@ Promoted verified candidate `dpl_DCErV9YDAg1D2aanMUrRjUJ8wJki` ([immutable deplo
 Build/TypeScript, 597 automated regressions, eight focused cases and four browser suites pass. Six final hosted groups verify actual Realtime/native-browser SDP negotiation and hangup, current participant/version binding and retry reuse, actual consented vision guidance without retained images, task timer/outcome recovery and reviewed source-linked exports, access/source-erasure rejection, usage bounds and complete synthetic cleanup. The final hosted run used one realtime session-start and one vision generation; microphone audio was not transmitted. Native SDP parsing passed; human duplex audio, interruption accuracy and research validity remain unvalidated. The development key rejected realtime signaling; the existing Production key passed these hosted checks.
 
 All temporary workspace data, users and sessions were removed. Existing account count and the entire paused pilot are unchanged; independent private Blob checks show zero files/zero bytes. Queue expiry reuses the existing private consumer; daily maintenance retries expired calls, while source erasure clears timer/guidance records and attempts provider hangup without blocking private-byte deletion. No new service or required environment variable was added. Realtime token costs are not fully reconciled in Echo Lab's ledger; see provider billing. Details and limits are in [the method contract](richer-interviewing.md). Reporting/media expansion is next for approval; the human pilot and domain-dependent email remain deferred.
+
+
+## Reporting and media expansion — October 29, 2026
+
+Deployment `dpl_8fkLrvzaBtAnv1SCAW923xgqnKGw` is independently verified **Ready** at https://echo-lab-psi.vercel.app. Its immutable URL is https://echo-b8t5zv8ww-jessholbrook-gmailcoms-projects.vercel.app. The exact candidate passed hosted checks before promotion; the main URL resolves to that deployment and `/api/health` returns `ok:true` and `aiConfigured:true`.
+
+Released [AI-assisted reviewed clips, cross-study reels and static PowerPoint imports](reporting-media-expansion.md). The new **AI clips** and **Import slides** tabs are under **Reports & media**. Existing same-study/manual reporting remains available. Imports preserve original slide parts, then append current reviewed report slides. Supported formats and resource bounds are explicit; arbitrary presentation formats and full native Office rendering fidelity are not claimed.
+
+Validation: production build, standalone TypeScript, formatting and **604/604 compiled automated tests** pass (zero skipped). The new desktop/mobile media workflow and existing reporting browser regression pass, including actual audio playback, reviewed edits, real MP4 generation, source-manifest downloads, original-deck downloads and composed cited PPTX packages. A regression found during development also confirms source erasure handles older incomplete reporting records.
+
+Six hosted verification groups pass on the exact release candidate:
+
+- Real synthetic speech → Whisper word timestamps → AI exact-quote suggestions; explicit consent/role controls, reviewed edited acceptance/provenance and duplicate-request handling. The final run used one read-aloud, one alignment and one quote-selection provider operation.
+- Native Vercel Queue cross-study rendering, a successfully decoded private MP4, source-labelled captions, full source manifest and current-source sharing.
+- Private static PPTX upload/retry, original review, current reviewed report composition, original slide byte preservation and source citations.
+- Foreign-source erasure revokes cross-study shares and physically deletes dependent outputs; own-source erasure removes AI drafts/private imported originals and rejects stale upload replay.
+- Provider-use reconciliation confirms the final synthetic run’s three operations; no human interviews, recruitment, payouts or email.
+- Complete disposable workspace/source/media/session cleanup, unchanged global user count and exact paused-pilot document preservation.
+
+Independent Vercel Blob checks show `echo-lab-recordings` at **0 files / 0 B** after cleanup. Private verification environment/state files were removed. The paused pilot remains untouched. The project API confirms daily maintenance is enabled at `0 5 * * *` on this deployment; no new observation of a future scheduled firing is claimed.
+
+Human research/audio quality, scientific interpretation and native PowerPoint visual fidelity remain unvalidated. Next proposed approval: **External recruitment and automation**; human pilot and domain-dependent email remain deferred.

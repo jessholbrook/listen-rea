@@ -1,4 +1,6 @@
 "use client";
+import ClipSuggestionsPanel from "./clip-suggestions-panel";
+import PresentationImportPanel from "./presentation-import-panel";
 import BackgroundJobsPanel from "./background-jobs-panel";
 import PPTXEvidencePanel from "./pptx-evidence-panel";
 
@@ -124,6 +126,8 @@ export default function ReportingPanel({
           {[
             ["reports", "Report editions"],
             ["media", "Clips & reels"],
+            ["assist", "AI clips"],
+            ["imports", "Import slides"],
             ["styles", "Presentation styles"],
           ].map(([id, name]) => (
             <button
@@ -450,6 +454,13 @@ export default function ReportingPanel({
                               >
                                 Download captions
                               </a>
+                              <a
+                                className="button"
+                                href={"/api/" + base + `/jobs/${j.id}/sources`}
+                                download="reel-sources.json"
+                              >
+                                Download source manifest
+                              </a>
                               <button
                                 className="button"
                                 disabled={busy}
@@ -472,6 +483,20 @@ export default function ReportingPanel({
                 )}
               </section>
             </>
+          )}
+          {tab === "assist" && (
+            <ClipSuggestionsPanel
+              studyId={study.id}
+              onSaved={async () => {
+                await reload();
+              }}
+            />
+          )}
+          {tab === "imports" && (
+            <PresentationImportPanel
+              studyId={study.id}
+              editions={data.editions}
+            />
           )}
           {tab === "styles" && (
             <section className="panel">
@@ -1449,14 +1474,16 @@ function ReelEditor({
       name: reel?.name || "",
       clipIds: reel?.clipIds || ([] as string[]),
       reviewed: reel?.reviewed || false,
+      crossStudy: reel?.crossStudy || false,
     }),
     [changed, setChanged] = useState(false);
   function change(p: Partial<typeof r>) {
     setR({ ...r, ...p, reviewed: false });
     setChanged(true);
   }
+  const catalog = r.crossStudy ? data.workspaceClips || data.clips : data.clips;
   const duration = r.clipIds.reduce((n, id) => {
-    const c = data.clips.find((c) => c.id === id);
+    const c = catalog.find((c) => c.id === id);
     return n + (c ? c.endMs - c.startMs : 0);
   }, 0);
   return (
@@ -1483,6 +1510,29 @@ function ReelEditor({
         />
       </label>
       <label>
+        <input
+          type="checkbox"
+          checked={r.crossStudy}
+          onChange={(e) =>
+            change({
+              crossStudy: e.target.checked,
+              clipIds: e.target.checked
+                ? r.clipIds
+                : r.clipIds.filter((id) => data.clips.some((c) => c.id === id)),
+            })
+          }
+        />
+        Include reviewed clips from other studies in this workspace
+      </label>
+      {r.crossStudy && (
+        <p>
+          Each rendered segment adds a source-study label. Review differences in
+          study design, cohorts and context; this reel does not pool participant
+          counts. The catalog shows up to 500 recent reviewed clips. Download
+          the source manifest with the MP4.
+        </p>
+      )}
+      <label>
         Add reviewed clip
         <select
           aria-label="Add reviewed clip"
@@ -1494,23 +1544,29 @@ function ReelEditor({
           }}
         >
           <option value="">Choose a clip</option>
-          {data.clips
+          {catalog
             .filter((c) => c.reviewed && !r.clipIds.includes(c.id))
             .map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
+                {"studyTitle" in c ? " · " + String(c.studyTitle) : ""}
               </option>
             ))}
         </select>
       </label>
       <ol className="reel-order">
         {r.clipIds.map((id, n) => {
-          const c = data.clips.find((c) => c.id === id);
+          const c = catalog.find((c) => c.id === id);
           return (
             <li key={id}>
               <span>
                 {c?.name || "Missing clip"}
                 {!c?.reviewed ? " · needs review" : ""}
+                {r.crossStudy && c && "displayCaption" in c && (
+                  <small style={{ whiteSpace: "pre-line", display: "block" }}>
+                    {String(c.displayCaption)}
+                  </small>
+                )}
               </span>
               <div className="inline">
                 <button
@@ -1561,9 +1617,7 @@ function ReelEditor({
           checked={r.reviewed}
           disabled={
             !r.clipIds.length ||
-            r.clipIds.some(
-              (id) => !data.clips.find((c) => c.id === id)?.reviewed,
-            )
+            r.clipIds.some((id) => !catalog.find((c) => c.id === id)?.reviewed)
           }
           onChange={(e) => {
             setR({ ...r, reviewed: e.target.checked });

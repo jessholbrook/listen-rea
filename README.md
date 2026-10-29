@@ -142,3 +142,5 @@ PDF-observation answers support [private drafts, review history and explicit rep
 Remaining engineering bundles and deferred validation are summarized in [remaining work](docs/remaining-work.md).
 
 [Background processing](docs/background-processing.md) is live: native transcription/render workers, progress, cancellation, retry/recovery and daily retention cleanup. Uploads must finish before closing the page. [Advanced research methods](docs/advanced-research-methods.md) add experimental hierarchical MaxDiff/portfolios, open/hybrid card sorting and reviewed recurring Pulse drafts. [Richer interviewing](docs/richer-interviewing.md) adds opt-in streaming voice, participant-requested screen guidance, return-to-task reminders and explicit task timers/reported outcomes. The next proposed milestone is reporting and media expansion.
+
+[Reporting and media expansion](docs/reporting-media-expansion.md) adds reviewed AI clip suggestions, source-labelled cross-study reels and private static PPTX imports with appended reviewed report slides. See the contract for supported formats, review steps and validation limits.

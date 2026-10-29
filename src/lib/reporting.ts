@@ -169,6 +169,14 @@ export const clipInput = z.object({
   reviewed: z.boolean(),
 });
 export type MediaClip = z.infer<typeof clipInput> & {
+  aiProvenance?: {
+    runId: string;
+    suggestionIndex: number;
+    model: string;
+    transcriptionModel: string;
+    sourceDigest: string;
+    edited: boolean;
+  };
   id: string;
   workspaceId: string;
   studyId: string;
@@ -184,6 +192,7 @@ export const reelInput = z
   .object({
     name: z.string().trim().min(1).max(100),
     clipIds: z.array(z.uuid()).min(1).max(6),
+    crossStudy: z.boolean().optional(),
     reviewed: z.boolean(),
   })
   .refine(
@@ -203,6 +212,7 @@ export type RenderJob = {
   studyId: string;
   reelId: string;
   reelVersion: number;
+  sourceVersions?: { studyId: string; dataVersion: number; title: string }[];
   clipVersions: { id: string; version: number }[];
   dataVersion: number;
   name: string;
@@ -322,6 +332,10 @@ export type ReportingData = {
   editions: ReportEdition[];
   templates: ReportTemplate[];
   clips: MediaClip[];
+  workspaceClips?: (MediaClip & {
+    studyTitle: string;
+    displayCaption: string;
+  })[];
   reels: MediaReel[];
   jobs: RenderJob[];
   sources: MediaSource[];
@@ -331,4 +345,14 @@ export type ReportingData = {
 };
 export function citationsOf(blocks: ReportBlock[]): Citation[] {
   return blocks.flatMap((b) => b.citations);
+}
+
+export function crossStudyCaption(
+  title: string,
+  studyId: string,
+  caption: string,
+) {
+  const clean = title.replace(/\s+/g, " ").trim(),
+    chars = Array.from(clean);
+  return `${chars.slice(0, 60).join("")}${chars.length > 60 ? "…" : ""} [${studyId.slice(0, 8)}]\n${caption}`;
 }

@@ -71,6 +71,7 @@ import { actor, canEdit, body, respond, fail } from "./http";
 import { scopeInterviews } from "./concepts";
 import type { Study, Analysis, Interview, Actor, Citation } from "./domain";
 import {
+  crossStudyCaption,
   templateSchema,
   defaultStyle,
   editionInput,
@@ -258,18 +259,36 @@ async function verifyCitations(
   }
   return all;
 }
-async function sources(s: Study): Promise<MediaSource[]> {
+export async function reportingSources(s: Study): Promise<MediaSource[]> {
   const all = (await interviews(s)).filter(
     (i) => !i.preview && !i.excluded && i.status === "complete",
   );
   const rows = await db
     .prepare(
-      "SELECT id,interview_id,turn_version,duration_ms,kind FROM media WHERE workspace_id=? AND study_id=? AND kind IN ('audio','screen','import-video')",
+      "SELECT id,interview_id,turn_version,duration_ms,kind,capture_id FROM media WHERE workspace_id=? AND study_id=? AND kind IN ('audio','screen','import-video')",
     )
     .all(s.workspaceId, s.id);
+  const captures = new Map(
+    (
+      await list<{ id: string; questionId: string }>(
+        "capture",
+        s.workspaceId,
+        s.id,
+      )
+    ).map((c) => [c.id, c]),
+  );
   return rows.flatMap((m) => {
     const i = all.find((i) => i.id === m.interview_id),
-      t = i?.turns[Number(m.turn_version)];
+      t =
+        m.kind === "audio"
+          ? i?.turns.find((t) => t.audioId === m.id)
+          : m.kind === "screen"
+            ? i?.turns.find(
+                (t) =>
+                  t.questionId ===
+                  captures.get(String(m.capture_id))?.questionId,
+              )
+            : i?.turns[Number(m.turn_version)];
     if (!i || !t || (m.kind === "audio" && t.audioId !== m.id)) return [];
     return [
       {
@@ -287,8 +306,10 @@ async function sources(s: Study): Promise<MediaSource[]> {
     ];
   });
 }
-async function validateClip(s: Study, c: z.infer<typeof clipInput>) {
-  const source = (await sources(s)).find((m) => m.mediaId === c.mediaId);
+export async function validateClip(s: Study, c: z.infer<typeof clipInput>) {
+  const source = (await reportingSources(s)).find(
+    (m) => m.mediaId === c.mediaId,
+  );
   if (!source)
     fail(
       400,
@@ -321,11 +342,28 @@ async function reelClips(s: Study, r: MediaReel, review = false) {
   const clips: MediaClip[] = [];
   for (const id of r.clipIds) {
     const c = await get<MediaClip>("mediaClip", id, s.workspaceId);
-    if (!c || c.studyId !== s.id) fail(400, "A reel clip is missing.");
-    await validateClip(s, c);
+    if (!c || (!r.crossStudy && c.studyId !== s.id))
+      fail(400, "A reel clip is missing or outside the selected study scope.");
+    const sourceStudy =
+      c.studyId === s.id
+        ? s
+        : await get<Study>("study", c.studyId, s.workspaceId);
+    if (!sourceStudy) fail(400, "A source study is unavailable.");
+    await validateClip(sourceStudy, c);
     if (review && !c.reviewed)
       fail(400, "Review every clip’s timing and caption before rendering.");
-    clips.push(c);
+    clips.push(
+      r.crossStudy
+        ? {
+            ...c,
+            caption: crossStudyCaption(
+              sourceStudy.title,
+              sourceStudy.id,
+              c.caption,
+            ),
+          }
+        : c,
+    );
   }
   if (clips.reduce((n, c) => n + c.endMs - c.startMs, 0) > 60000)
     fail(400, "Keep a reel to at most 60 seconds.");
@@ -368,6 +406,18 @@ async function verifiedJob(s: Study, id: string) {
   const j = await get<RenderJob>("renderJob", id, s.workspaceId);
   if (!j || j.studyId !== s.id) fail(404, "Render job not found.");
   fresh(j, s);
+  for (const v of j.sourceVersions || []) {
+    const sourceStudy = await get<Study>("study", v.studyId, s.workspaceId);
+    if (
+      !sourceStudy ||
+      sourceStudy.dataVersion !== v.dataVersion ||
+      sourceStudy.title !== v.title
+    )
+      fail(
+        409,
+        "A source study changed. Review the cross-study reel and create a new render job.",
+      );
+  }
   const r = await get<MediaReel>("mediaReel", j.reelId, s.workspaceId);
   if (!r || r.studyId !== s.id || r.version !== j.reelVersion || !r.reviewed)
     fail(409, "The reel changed. Review it and create a new render job.");
@@ -383,10 +433,18 @@ async function verifiedJob(s: Study, id: string) {
     fail(409, "A clip changed. Create a new render job.");
   return { job: j, reel: r, clips };
 }
-async function deleteJobs(s: Study, predicate: (j: RenderJob) => boolean) {
-  const jobs = (await list<RenderJob>("renderJob", s.workspaceId, s.id)).filter(
-    predicate,
-  );
+async function deleteJobs(
+  s: Study,
+  predicate: (j: RenderJob) => boolean,
+  workspaceWide = false,
+) {
+  const jobs = (
+    await list<RenderJob>(
+      "renderJob",
+      s.workspaceId,
+      workspaceWide ? undefined : s.id,
+    )
+  ).filter(predicate);
   await queueRenderDeletion(
     s,
     jobs.flatMap((j) => (j.outputId ? [j.outputId] : [])),
@@ -403,6 +461,10 @@ async function deleteJobs(s: Study, predicate: (j: RenderJob) => boolean) {
       )
       .run(j.id, s.workspaceId);
   }
+  for (const studyId of new Set(jobs.map((j) => j.studyId)))
+    await db
+      .prepare("DELETE FROM shares WHERE workspace_id=? AND study_id=?")
+      .run(s.workspaceId, studyId);
   await revoke(s);
 }
 function attachment(bytes: Buffer, mime: string, name: string) {
@@ -520,7 +582,7 @@ export async function dispatchReporting(
         memo: clips
           .map(
             (c, n) =>
-              `${n + 1}. ${c.name}\n“${c.quote}”\nParticipant ${c.interviewId} · Turn ${c.turnId}`,
+              `${n + 1}. ${c.name}\n“${c.quote}”\nStudy ${c.studyId} · Participant ${c.interviewId} · Turn ${c.turnId}`,
           )
           .join("\n\n"),
         reviewed: true,
@@ -557,7 +619,8 @@ export async function dispatchReporting(
       clips: await list<MediaClip>("mediaClip", s.workspaceId, s.id),
       reels: await list<MediaReel>("mediaReel", s.workspaceId, s.id),
       jobs: await list<RenderJob>("renderJob", s.workspaceId, s.id),
-      sources: await sources(s),
+      sources: await reportingSources(s),
+      workspaceClips: await workspaceReviewedClips(s),
       analyses: latest.map((x) => ({
         id: x.id,
         label: x.scope
@@ -639,6 +702,27 @@ export async function dispatchReporting(
     }
     if (action) fail(404, "Edition resource not found.");
     return respond({ edition: e, stale: e.dataVersion !== s.dataVersion });
+  }
+  if (resource === "jobs" && id && action === "sources" && method === "GET") {
+    const { job, clips } = await verifiedJob(s, id);
+    return respond({
+      jobId: job.id,
+      sourceVersions: job.sourceVersions || [
+        { studyId: s.id, dataVersion: s.dataVersion, title: s.title },
+      ],
+      clips: clips.map((c, n) => ({
+        studyId: c.studyId,
+        interviewId: c.interviewId,
+        turnId: c.turnId,
+        mediaId: c.mediaId,
+        clipId: c.id,
+        quote: c.quote,
+        caption: c.caption,
+        sourceStartMs: c.startMs,
+        sourceEndMs: c.endMs,
+        rendered: job.segments?.[n] || null,
+      })),
+    });
   }
   if (resource === "clips" && id && action === "captions" && method === "GET") {
     const c = await get<MediaClip>("mediaClip", id, s.workspaceId);
@@ -1075,12 +1159,17 @@ export async function dispatchReporting(
           fail(404, "Clip not found.");
         if (previous.version !== input.version)
           fail(409, "Clip changed. Reload before saving.");
-        await deleteJobs(current, (j) =>
-          j.clipVersions.some((c) => c.id === id),
+        await deleteJobs(
+          current,
+          (j) => j.clipVersions.some((c) => c.id === id),
+          true,
         );
       }
       clip = {
         ...clipInput.parse(input),
+        ...(previous?.aiProvenance && previous.mediaId === input.mediaId
+          ? { aiProvenance: { ...previous.aiProvenance, edited: true } }
+          : {}),
         id: id || uid(),
         workspaceId: s.workspaceId,
         studyId: s.id,
@@ -1101,8 +1190,8 @@ export async function dispatchReporting(
     await transaction(async () => {
       const c = await get<MediaClip>("mediaClip", id, s.workspaceId);
       if (!c || c.studyId !== s.id) fail(404, "Clip not found.");
-      await deleteJobs(s, (j) => j.clipVersions.some((c) => c.id === id));
-      for (const r of await list<MediaReel>("mediaReel", s.workspaceId, s.id)) {
+      await deleteJobs(s, (j) => j.clipVersions.some((c) => c.id === id), true);
+      for (const r of await list<MediaReel>("mediaReel", s.workspaceId)) {
         if (!r.clipIds.includes(id)) continue;
         r.clipIds = r.clipIds.filter((c) => c !== id);
         if (!r.clipIds.length)
@@ -1193,6 +1282,26 @@ export async function dispatchReporting(
         reelId: r.id,
         reelVersion: r.version,
         clipVersions: clips.map((c) => ({ id: c.id, version: c.version })),
+        ...(r.crossStudy
+          ? {
+              sourceVersions: await Promise.all(
+                [...new Set([s.id, ...clips.map((c) => c.studyId)])].map(
+                  async (studyId) => {
+                    const study = (await get<Study>(
+                      "study",
+                      studyId,
+                      s.workspaceId,
+                    ))!;
+                    return {
+                      studyId,
+                      dataVersion: study.dataVersion,
+                      title: study.title,
+                    };
+                  },
+                ),
+              ),
+            }
+          : {}),
         dataVersion: current.dataVersion,
         name: r.name,
         state: "queued",
@@ -1344,4 +1453,41 @@ export async function dispatchReporting(
     return respond({ ok: true });
   }
   fail(404, "Reporting resource not found.");
+}
+
+async function workspaceReviewedClips(s: Study) {
+  const all = (await list<MediaClip>("mediaClip", s.workspaceId))
+      .filter((c) => c.reviewed)
+      .slice(0, 500),
+    studies = new Map<string, Study>(),
+    out: (MediaClip & { studyTitle: string; displayCaption: string })[] = [];
+  for (const study of await list<Study>("study", s.workspaceId))
+    studies.set(study.id, study);
+  for (const studyId of new Set(all.map((c) => c.studyId))) {
+    const study = studies.get(studyId);
+    if (!study) continue;
+    const sources = await reportingSources(study),
+      members = await interviews(study);
+    for (const c of all.filter((c) => c.studyId === studyId)) {
+      const source = sources.find((m) => m.mediaId === c.mediaId),
+        turn = members
+          .find((i) => i.id === source?.interviewId)
+          ?.turns.find((t) => t.id === source?.turnId);
+      if (
+        !source ||
+        !turn?.answer.includes(c.quote) ||
+        c.startMs < 0 ||
+        c.endMs > source.durationMs ||
+        c.endMs - c.startMs < 100 ||
+        c.endMs - c.startMs > 30000
+      )
+        continue;
+      out.push({
+        ...c,
+        studyTitle: study.title,
+        displayCaption: crossStudyCaption(study.title, study.id, c.caption),
+      });
+    }
+  }
+  return out;
 }

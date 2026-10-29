@@ -91,7 +91,8 @@
     "test:background": "tsx --test tests/background-jobs.test.ts",
     "evaluate:hierarchical": "tsx scripts/evaluate-hierarchical-maxdiff.ts",
     "test:advanced": "tsx tests/advanced-methods-browser.ts",
-    "test:richer": "tsx tests/richer-browser.ts"
+    "test:richer": "tsx tests/richer-browser.ts",
+    "test:media": "tsx tests/media-expansion-browser.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",
@@ -101,6 +102,7 @@
     "@vercel/blob": "^2.8.2",
     "@vercel/queue": "0.10.0",
     "ffmpeg-static": "5.3.0",
+    "jszip": "3.10.2",
     "lucide-react": "^0.468.0",
     "next": "^16.0.0",
     "pdf-lib": "1.17.1",
