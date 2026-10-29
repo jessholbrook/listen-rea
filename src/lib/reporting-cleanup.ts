@@ -95,13 +95,13 @@ export async function clearReporting(s: Study) {
     .run(s.workspaceId, s.id);
   await db
     .prepare(
-      "DELETE FROM documents WHERE workspace_id=? AND study_id=? AND kind IN ('reportEdition','reportSnapshot','mediaClip','mediaReel','renderJob','presentationImport','reportClipDraft','automationPlan')",
+      "DELETE FROM documents WHERE workspace_id=? AND study_id=? AND kind IN ('reportEdition','reportSnapshot','mediaClip','mediaReel','renderJob','presentationImport','reportClipDraft','automationPlan','automationExecution')",
     )
     .run(s.workspaceId, s.id);
   // Creation requests acquire a study after insertion. Cover older records whose index was not rebound.
   await db
     .prepare(
-      "DELETE FROM documents WHERE kind='automationPlan' AND workspace_id=? AND (study_id=? OR json_extract(data,'$.studyId')=?)",
+      "DELETE FROM documents WHERE kind IN ('automationPlan','automationExecution') AND workspace_id=? AND (study_id=? OR json_extract(data,'$.studyId')=?)",
     )
     .run(s.workspaceId, s.id, s.id);
   await db

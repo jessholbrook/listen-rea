@@ -1,6 +1,6 @@
 # Reviewed study automation
 
-Echo Lab supports a complete change-request workflow over REST and MCP: read a granted draft, propose creation/editing/publication/fielding changes, inspect the request in the workspace, apply or reject it as an admin, and read the result from the integration. Integrations do not approve or execute requests themselves.
+Echo Lab supports a complete change-request workflow over REST and MCP: read a granted draft, propose creation/editing/publication/fielding changes, inspect the request in the workspace, apply or reject it as an admin, and read the result from the integration. Reviewed requests do not approve or execute themselves. [Separately delegated draft automation](delegated-draft-automation.md) can execute private draft creation/editing under explicit admin opt-in and limits; it uses a distinct endpoint/tool and leaves reviewed proposals unchanged.
 
 This is the automation part of the external recruitment and automation roadmap. Jess confirmed there are no panel/payout accounts yet and requested automation first. Paid panels, actual payouts and deeper provider synchronization remain unconnected. No new service account, domain, model or email provider is needed for this workflow.
 
@@ -45,7 +45,7 @@ The existing `/api/mcp` connection discovers three additional tools only for an 
 | `propose_study_change` | Store a private request for admin review. Annotated as a write because it creates a request; it does not change a study. |
 | `get_study_change`     | Read the key’s own request and decision/result.                                                                          |
 
-Existing research read tools retain their scopes. OAuth does not acquire these tools. There is no bearer approve/apply/pay/recruit tool. Stateless transport, host/origin checks, request bounds and MCP/REST shared rate accounting still apply. No provider/model calls are made by the automation workflow.
+Existing research read tools retain their scopes. OAuth does not acquire these tools. There is no bearer approve/apply/pay/recruit tool. The separate delegated draft tool can only create/edit drafts and is unavailable by default. Stateless transport, host/origin checks, request bounds and MCP/REST shared rate accounting still apply. No provider/model calls are made by the automation workflow.
 
 ## Consistency, records and limits
 
@@ -61,4 +61,4 @@ Response/source erasure removes the study’s request bodies, copied guide snaps
 
 Five server lifecycle cases cover complete REST changes, scopes/admin permissions, retries/concurrency, expiry/revocation, bounded inputs, explicit official MCP discovery/calls and source erasure/replay rejection. The desktop/mobile browser flow enables a key, reviews creation/publication, exposes fielding effects, rejects drift after review and resets the acknowledgement on refresh. Existing API/MCP/OAuth read workflows remain regression coverage. Hosted verification uses disposable synthetic studies and a typed synthetic answer, with no panel, payout, email or model operations.
 
-Next proposed work: provider selection and a concrete recruitment/payout integration plan, including account setup and explicit spending controls. Actual provider connections and payments remain unavailable until those choices are made.
+Provider comparison and both connectors are implemented; account setup/testing is deferred by preference. Delegated private draft creation/editing is implemented as a separate opt-in extension. Integration change notifications are the next proposed deeper-synchronization bundle.

@@ -6,6 +6,8 @@ import {
   automationOperations,
   type AutomationGrant,
   type AutomationPlan,
+  type DraftExecution,
+  type AutomationGrantEvent,
 } from "@/lib/study-automation";
 type Key = { id: string; name: string; available: boolean; studyIds: string[] };
 type Summary = {
@@ -18,7 +20,23 @@ type Summary = {
   readiness: string;
   createdAt: string;
 };
-type Data = { keys: Key[]; grants: AutomationGrant[]; plans: Summary[] };
+type ExecutionSummary = {
+  id: string;
+  studyId: string;
+  keyName: string;
+  operation: string;
+  reason: string;
+  createdAt: string;
+  grantVersion: number;
+  result: DraftExecution["result"];
+};
+type Data = {
+  keys: Key[];
+  grants: AutomationGrant[];
+  plans: Summary[];
+  executions: ExecutionSummary[];
+  grantEvents: AutomationGrantEvent[];
+};
 export default function AutomationPanel() {
   const [data, setData] = useState<Data | null>(null),
     [error, setError] = useState(""),
@@ -52,7 +70,8 @@ export default function AutomationPanel() {
       <p>
         Enable a static API key to read its selected study drafts and submit
         change requests through REST or MCP. An admin must inspect and apply
-        each request here. Requests never apply themselves.
+        each reviewed request here. Separately delegated create/edit operations
+        can change private drafts immediately within the limits you set.
       </p>
       <p>
         Approving creation also grants that one new study to the requesting key.
@@ -90,6 +109,46 @@ export default function AutomationPanel() {
               refresh={load}
             />
           ))}
+          <h4>Automatic draft activity</h4>
+          <p className="small muted">
+            Up to 200 recent executions. These changes were executed under a
+            standing admin delegation, without individual approval. Inspect
+            original input and result below. Source erasure removes linked
+            records.
+          </p>
+          {!data.executions.length && <p>No automatic draft changes yet.</p>}
+          {data.executions.map((e) => (
+            <ExecutionCard key={e.id} summary={e} />
+          ))}
+          <details>
+            <summary>Automation permission history</summary>
+            <p className="small muted">
+              Up to 200 recent permission changes across keys, with the latest
+              100 retained per key.
+            </p>
+            {data.grantEvents.map((e) => (
+              <div className="panel visual-stack" key={e.id}>
+                <strong>
+                  {data.keys.find((k) => k.id === e.keyId)?.name ||
+                    "Unavailable key"}{" "}
+                  · permissions v{e.version}
+                </strong>
+                <p>
+                  {e.actorName} · {new Date(e.createdAt).toLocaleString()}
+                </p>
+                <p>
+                  {e.enabled ? "Automation enabled" : "Automation disabled"} ·
+                  Requested operations: {e.operations.join(", ")}
+                </p>
+                <p>
+                  Automatic drafts:{" "}
+                  {e.enabled && e.delegation.enabled
+                    ? `${e.delegation.operations.join(", ")} · ${e.delegation.limit24h} per preceding 24 hours`
+                    : "disabled"}
+                </p>
+              </div>
+            ))}
+          </details>
           <h4>Change request inbox</h4>
           <p className="small muted">
             Up to 200 recent requests are shown. Pending requests expire after
@@ -125,8 +184,18 @@ function GrantCard({
   const [enabled, setEnabled] = useState(grant?.enabled || false),
     [operations, setOperations] = useState<string[]>(grant?.operations || []),
     [reviewed, setReviewed] = useState(false),
+    [delegated, setDelegated] = useState(grant?.delegation?.enabled || false),
+    [delegatedOps, setDelegatedOps] = useState<string[]>(
+      grant?.delegation?.operations || [],
+    ),
+    [limit24h, setLimit24h] = useState(grant?.delegation?.limit24h || 5),
+    [delegationReviewed, setDelegationReviewed] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  function touch() {
+    setReviewed(false);
+    setDelegationReviewed(false);
+  }
   return (
     <article
       className="panel visual-stack"
@@ -153,7 +222,8 @@ function GrantCard({
             checked={enabled}
             onChange={(e) => {
               setEnabled(e.target.checked);
-              setReviewed(false);
+              if (!e.target.checked) setDelegated(false);
+              touch();
             }}
           />
           Allow draft reads and reviewed change requests
@@ -167,24 +237,94 @@ function GrantCard({
                 setOperations((v) =>
                   e.target.checked ? [...v, op] : v.filter((n) => n !== op),
                 );
-                setReviewed(false);
+                touch();
               }}
             />
             Request {op}
           </label>
         ))}
+        <h6>Delegate automatic draft changes</h6>
+        <p className="small muted">
+          Optional. A trusted static key can create/edit drafts immediately. A
+          created study is added only to this key’s selected studies.
+          Publication and opening fielding still require admin review.
+        </p>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={delegated}
+            onChange={(e) => {
+              setDelegated(e.target.checked);
+              touch();
+            }}
+          />
+          Allow automatic draft execution
+        </label>
+        {delegated && (
+          <>
+            {["create", "edit"].map((op) => (
+              <label className="checkbox-label" key={op}>
+                <input
+                  type="checkbox"
+                  checked={delegatedOps.includes(op)}
+                  onChange={(e) => {
+                    setDelegatedOps((v) =>
+                      e.target.checked ? [...v, op] : v.filter((o) => o !== op),
+                    );
+                    touch();
+                  }}
+                />
+                Automatically {op} drafts
+              </label>
+            ))}
+            <label>
+              Automatic draft changes per preceding 24 hours
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={limit24h}
+                onChange={(e) => {
+                  setLimit24h(Number(e.target.value));
+                  touch();
+                }}
+              />
+            </label>
+            <label className="checkbox-label report-review">
+              <input
+                type="checkbox"
+                checked={delegationReviewed}
+                onChange={(e) => setDelegationReviewed(e.target.checked)}
+              />
+              I authorize this trusted key to execute the selected draft changes
+              immediately, without individual review, within this limit.
+            </label>
+          </>
+        )}
         <label className="checkbox-label report-review">
           <input
             type="checkbox"
             checked={reviewed}
             onChange={(e) => setReviewed(e.target.checked)}
           />
-          I reviewed this key’s draft access and allowed operations. Each study
-          change will still need an admin decision.
+          {delegated
+            ? "I reviewed this key’s draft access and requested operations."
+            : "I reviewed this key’s draft access and allowed operations. Each study change will still need an admin decision."}
         </label>
         <button
           className="button"
-          disabled={!reviewed || !operations.length}
+          disabled={
+            !reviewed ||
+            !operations.length ||
+            (delegated &&
+              (!enabled ||
+                !delegationReviewed ||
+                !delegatedOps.length ||
+                delegatedOps.some((op) => !operations.includes(op)) ||
+                !Number.isInteger(limit24h) ||
+                limit24h < 1 ||
+                limit24h > 50))
+          }
           onClick={async () => {
             setBusy(true);
             setError("");
@@ -194,6 +334,12 @@ function GrantCard({
                 enabled,
                 operations,
                 reviewed,
+                delegation: {
+                  enabled: delegated,
+                  operations: delegatedOps,
+                  limit24h,
+                },
+                ...(delegated ? { delegationReviewed } : {}),
               });
               await refresh();
             } catch (e) {
@@ -206,6 +352,39 @@ function GrantCard({
           Save automation permissions
         </button>
       </fieldset>
+      {grant?.enabled && grant.delegation?.enabled && (
+        <>
+          <p>
+            Automatic draft execution is enabled:{" "}
+            {grant.delegation.operations.join(", ")}, up to{" "}
+            {grant.delegation.limit24h} changes per preceding 24 hours.
+          </p>
+          <button
+            className="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setError("");
+              try {
+                await api("automation/grants/" + k.id, "PUT", {
+                  version: grant.version,
+                  enabled: grant.enabled,
+                  operations: grant.operations,
+                  reviewed: true,
+                  delegation: { ...grant.delegation, enabled: false },
+                });
+                await refresh();
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Disable automatic draft changes
+          </button>
+        </>
+      )}
     </article>
   );
 }
@@ -383,6 +562,67 @@ function PlanCard({
           )}
         </>
       )}
+    </article>
+  );
+}
+
+function ExecutionCard({ summary: e }: { summary: ExecutionSummary }) {
+  const [detail, setDetail] = useState<DraftExecution | null>(null),
+    [error, setError] = useState("");
+  return (
+    <article
+      className="panel visual-stack"
+      aria-label={"Automatic draft " + e.operation}
+    >
+      <h5>
+        {e.operation} · {e.keyName}
+      </h5>
+      <p>
+        Executed automatically · {new Date(e.createdAt).toLocaleString()} ·
+        grant v{e.grantVersion}
+      </p>
+      <p>{e.reason}</p>
+      <button
+        className="button"
+        onClick={async () => {
+          try {
+            setDetail((await api("automation/executions/" + e.id)).execution);
+            setError("");
+          } catch (error) {
+            setError((error as Error).message);
+          }
+        }}
+      >
+        Inspect automatic draft change
+      </button>
+      {error && <p role="alert">{error}</p>}
+      {detail && (
+        <>
+          <p>
+            Integration: {detail.keyName} · Authorized by {detail.authorizedBy}
+          </p>
+          {detail.before && (
+            <details>
+              <summary>Draft before execution</summary>
+              <GuidePreview guide={detail.before.guide} />
+            </details>
+          )}
+          <details open>
+            <summary>Executed draft</summary>
+            <GuidePreview guide={detail.proposal.change.guide} />
+          </details>
+          <p>
+            Result: study version {detail.result.version} · fielding{" "}
+            {detail.result.fielding} ·{" "}
+            {detail.result.revisionId
+              ? "Existing publication preserved"
+              : "Unpublished"}
+          </p>
+        </>
+      )}
+      <a className="button" href={"/?study=" + e.studyId}>
+        Open resulting draft
+      </a>
     </article>
   );
 }

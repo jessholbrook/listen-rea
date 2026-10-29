@@ -1,5 +1,5 @@
 import { automationApi, automationGrant } from "./study-automation-server";
-import { mcpAutomationTools } from "./mcp-tools";
+import { mcpAutomationTools, mcpDelegatedDraftTools } from "./mcp-tools";
 import { ZodError } from "zod";
 import { randomUUID } from "node:crypto";
 import { McpServer, createMcpHandler } from "@modelcontextprotocol/server";
@@ -218,7 +218,10 @@ export async function handleMcp(req: Request) {
           );
         }
         if (grant)
-          for (const tool of mcpAutomationTools) {
+          for (const tool of [
+            ...mcpAutomationTools,
+            ...(grant.delegation?.enabled ? mcpDelegatedDraftTools : []),
+          ]) {
             server.registerTool(
               tool.name,
               {
@@ -227,7 +230,7 @@ export async function handleMcp(req: Request) {
                 inputSchema: tool.schema,
                 annotations: {
                   readOnlyHint: tool.readOnly,
-                  destructiveHint: false,
+                  destructiveHint: tool.name === "execute_draft_change",
                   idempotentHint: true,
                   openWorldHint: false,
                 },
