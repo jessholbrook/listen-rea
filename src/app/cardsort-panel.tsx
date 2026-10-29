@@ -6,7 +6,13 @@ import type { Interview } from "@/lib/domain";
 import { Modal, Spinner } from "./components";
 type Result = ReturnType<typeof cardsortResults>[number];
 type Selection =
-  | { scope: string; kind: "placement"; cardId: string; groupId: string | null }
+  | {
+      scope: string;
+      kind: "placement";
+      cardId: string;
+      groupId: string | null;
+      custom?: boolean;
+    }
   | { scope: string; kind: "pair"; a: string; b: string };
 export default function CardsortPanel({
   studyId,
@@ -83,10 +89,11 @@ export default function CardsortPanel({
           </button>
         </div>
         <p>
-          Closed sorting into researcher-defined groups. Completed, included
-          interviews enter the summaries; unconfirmed drafts and unfinished
-          interviews remain separate. Each revision and concept is reported
-          independently.
+          Closed, open and hybrid sorts. Participant-created labels stay
+          respondent-specific; co-sort associations use each person’s own
+          groups. Completed, included interviews enter the summaries;
+          unconfirmed drafts and unfinished interviews remain separate. Each
+          revision and concept is reported independently.
         </p>
         <form
           className="mixed-grid"
@@ -138,7 +145,7 @@ export default function CardsortPanel({
       {results?.length === 0 && (
         <section className="panel">
           <p>
-            No card-sort responses match this view. Add a Closed card sort in
+            No card-sort responses match this view. Add a card-sort question in
             Study design, publish it, and collect responses. Preview interviews
             stay out of results.
           </p>
@@ -150,6 +157,13 @@ export default function CardsortPanel({
         const outcomes = r.outcomes.filter((o) => {
           if (!chosen) return true;
           if (o.status !== "included") return false;
+          if (chosen.kind === "placement" && chosen.custom)
+            return o.assignments.some(
+              (a) =>
+                a.cardId === chosen.cardId &&
+                a.groupId !== null &&
+                !r.config.groups.some((g) => g.id === a.groupId),
+            );
           if (chosen.kind === "placement")
             return o.assignments.some(
               (a) => a.cardId === chosen.cardId && a.groupId === chosen.groupId,
@@ -190,6 +204,9 @@ export default function CardsortPanel({
                     {r.config.groups.map((g) => (
                       <th key={g.id}>{g.text}</th>
                     ))}
+                    {r.config.mode && r.config.mode !== "closed" && (
+                      <th>Participant-created category</th>
+                    )}
                     <th>Uncertain</th>
                   </tr>
                 </thead>
@@ -200,12 +217,27 @@ export default function CardsortPanel({
                       {[
                         ...card.groups.map((g) => ({
                           id: g.id as string | null,
+                          custom: false,
                           text: g.text,
                           count: g.count,
                           percent: g.percent,
                         })),
+                        ...(r.config.mode && r.config.mode !== "closed"
+                          ? [
+                              {
+                                id: null,
+                                custom: true,
+                                text: "Participant-created category",
+                                count: card.custom,
+                                percent: card.denominator
+                                  ? (100 * card.custom) / card.denominator
+                                  : null,
+                              },
+                            ]
+                          : []),
                         {
                           id: null,
+                          custom: false,
                           text: "Uncertain",
                           count: card.uncertain,
                           percent: card.denominator
@@ -213,7 +245,7 @@ export default function CardsortPanel({
                             : null,
                         },
                       ].map((g) => (
-                        <td key={JSON.stringify(g.id)}>
+                        <td key={JSON.stringify([g.custom, g.id])}>
                           <button
                             className="cardsort-cell"
                             aria-label={`${card.text} in ${g.text}`}
@@ -224,6 +256,7 @@ export default function CardsortPanel({
                                 kind: "placement",
                                 cardId: card.id,
                                 groupId: g.id,
+                                custom: g.custom,
                               })
                             }
                           >

@@ -10,13 +10,54 @@ export default function CardsortSettings({
   const c = q.cardsort!;
   return (
     <section className="panel visual-stack">
-      <h3>Closed card sort</h3>
+      <h3>
+        {c.mode === "open"
+          ? "Open card sort"
+          : c.mode === "hybrid"
+            ? "Hybrid card sort"
+            : "Closed card sort"}
+      </h3>
+      <label>
+        Sort method
+        <select
+          aria-label="Card sort method"
+          value={c.mode || "closed"}
+          onChange={(e) => {
+            const mode = e.target.value as "closed" | "open" | "hybrid";
+            onChange({
+              cardsort: {
+                ...c,
+                mode,
+                groups:
+                  mode === "open"
+                    ? []
+                    : c.groups.length >= 2
+                      ? c.groups
+                      : [
+                          { id: crypto.randomUUID(), text: "Group 1" },
+                          { id: crypto.randomUUID(), text: "Group 2" },
+                        ],
+              },
+            });
+          }}
+        >
+          <option value="closed">Closed: predefined groups</option>
+          <option value="open">Open: participant-created groups</option>
+          <option value="hybrid">
+            Hybrid: predefined and participant-created groups
+          </option>
+        </select>
+      </label>
       <p>
         Define cards and groups. Each card goes in one group, or an explicit
         uncertain category if enabled. Participants can revise placements and
         save a partial draft before confirming.
       </p>
-      {(["cards", "groups"] as const).map((type) => (
+      {(
+        ["cards", ...(c.mode === "open" ? [] : ["groups"])] as (
+          "cards" | "groups"
+        )[]
+      ).map((type) => (
         <fieldset className="visual-stack" key={type}>
           <legend>{type === "cards" ? "Cards" : "Groups"}</legend>
           {c[type].map((item, n) => (
@@ -107,8 +148,9 @@ export default function CardsortSettings({
       ))}
       <p className="small muted">
         IDs remain stable when labels change. Published revisions and concept
-        repeats are reported separately. Open/hybrid categories, drag-and-drop
-        and automated clustering are later work.
+        repeats are reported separately. Participant-created labels remain
+        respondent-specific. Drag-and-drop and automated semantic clustering are
+        not applied.
       </p>
     </section>
   );

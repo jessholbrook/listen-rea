@@ -4,7 +4,7 @@ October 19, 2026 · P5 initial implementation
 
 In **Study design**, add a **Closed card sort** question. Enter a neutral prompt, 3–30 distinct cards and 2–10 researcher-defined groups. Cards and groups have stable IDs; editing labels preserves those IDs. Choose whether to randomize card/group order, allow explicit uncertainty, and ask for a written explanation. Save and publish a revision before opening fielding.
 
-The [public Listen Labs announcement](https://listenlabs.com/whatsnew/introducing-card-sort) describes adding cards/groups to a discussion guide, collecting placements and reasoning, and supporting desktop/mobile. Echo Lab implements closed grouping with accessible selection controls. Open/hybrid sorting, participant-created categories, drag-and-drop, automated clustering and an inferred taxonomy remain later work.
+The [public Listen Labs announcement](https://listenlabs.com/whatsnew/introducing-card-sort) describes adding cards/groups to a discussion guide, collecting placements and reasoning, and supporting desktop/mobile. Echo Lab implements accessible selection controls for closed sorts and now [open/hybrid sorts with participant-created categories](advanced-research-methods.md). Drag-and-drop, automated clustering and an inferred taxonomy remain later work.
 
 ## Participant flow and draft recovery
 

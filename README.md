@@ -141,4 +141,4 @@ PDF-observation answers support [private drafts, review history and explicit rep
 
 Remaining engineering bundles and deferred validation are summarized in [remaining work](docs/remaining-work.md).
 
-[Background processing](docs/background-processing.md) is live: native transcription/render workers, progress, cancellation, retry/recovery and daily retention cleanup. Uploads must finish before closing the page. The next proposed milestone is advanced research methods.
+[Background processing](docs/background-processing.md) is live: native transcription/render workers, progress, cancellation, retry/recovery and daily retention cleanup. Uploads must finish before closing the page. [Advanced research methods](docs/advanced-research-methods.md) add experimental hierarchical MaxDiff/portfolios, open/hybrid card sorting and reviewed recurring Pulse drafts. The next proposed milestone is richer interviewing and usability analysis.

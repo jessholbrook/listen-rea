@@ -8,13 +8,24 @@ export const cardsortVersion = "closed-sort-v1";
 export const cardsortSchema = z
   .object({
     cards: z.array(entry).min(3).max(30),
-    groups: z.array(entry).min(2).max(10),
+    groups: z.array(entry).max(10),
+    mode: z.enum(["closed", "open", "hybrid"]).optional(),
     randomizeCards: z.boolean().default(true),
     randomizeGroups: z.boolean().default(false),
     allowUncertain: z.boolean().default(true),
     askReason: z.boolean().default(true),
   })
   .superRefine((c, ctx) => {
+    if (
+      (c.mode === "open" && c.groups.length !== 0) ||
+      (c.mode !== "open" && c.groups.length < 2)
+    )
+      ctx.addIssue({
+        code: "custom",
+        path: ["groups"],
+        message:
+          "Open sorts have no predefined groups; closed/hybrid sorts need at least two.",
+      });
     for (const type of ["cards", "groups"] as const)
       if (
         new Set(c[type].map((x) => x.id)).size !== c[type].length ||
@@ -27,6 +38,16 @@ export const cardsortSchema = z
           path: [type],
         });
   });
+export const flexibleSortVersion = "participant-sort-v2";
+export const cardsortMethod = (c: { mode?: string }) =>
+  c.mode && c.mode !== "closed" ? flexibleSortVersion : cardsortVersion;
+export const customGroupSchema = z
+  .object({
+    id: z.string().regex(/^participant_[a-zA-Z0-9-]{10,80}$/),
+    text: z.string().trim().min(1).max(100),
+  })
+  .strict();
+export type CustomSortGroup = z.infer<typeof customGroupSchema>;
 export type CardsortConfig = z.infer<typeof cardsortSchema>;
 export const assignmentSchema = z
   .array(
@@ -45,6 +66,7 @@ export type CardsortState = {
   draft: CardAssignment[];
   assignments: CardAssignment[];
   reason: string;
+  customGroups?: CustomSortGroup[];
 };
 export type CardsortPrompt = {
   phase: CardsortState["phase"];
@@ -52,6 +74,8 @@ export type CardsortPrompt = {
   groups: CardsortConfig["groups"];
   allowUncertain: boolean;
   draft: CardAssignment[];
+  mode?: "open" | "hybrid";
+  customGroups?: CustomSortGroup[];
 };
 export const cardsortState = (i: Interview, q: Question) =>
   Object.hasOwn(i.cardsortStates || {}, q.id)
@@ -108,9 +132,13 @@ export function cardsortPrompt(
   return {
     phase: s.phase,
     cards: s.cardOrder.map((id) => ({ ...c.cards.find((x) => x.id === id)! })),
-    groups: s.groupOrder.map((id) => ({
-      ...c.groups.find((x) => x.id === id)!,
-    })),
+    groups: [
+      ...s.groupOrder.map((id) => ({ ...c.groups.find((x) => x.id === id)! })),
+      ...(s.customGroups || []),
+    ],
+    ...(c.mode && c.mode !== "closed"
+      ? { mode: c.mode, customGroups: structuredClone(s.customGroups || []) }
+      : {}),
     allowUncertain: c.allowUncertain,
     draft: structuredClone(s.phase === "sort" ? s.draft : s.assignments),
   };
@@ -142,7 +170,8 @@ export function beginCardsort(
       writable: true,
       configurable: true,
       value: {
-        version: cardsortVersion,
+        version: cardsortMethod(c),
+        ...(c.mode && c.mode !== "closed" ? { customGroups: [] } : {}),
         cardOrder: c.randomizeCards
           ? shuffled(
               c.cards.map((x) => x.id),
@@ -167,7 +196,10 @@ export function validateAssignments(
   c: CardsortConfig,
   value: unknown,
   complete: boolean,
+  customGroups: CustomSortGroup[] = [],
 ) {
+  validateCustomGroups(c, customGroups);
+  const available = [...c.groups, ...customGroups];
   const parsed = assignmentSchema.safeParse(value);
   if (!parsed.success) throw new Error("INVALID_STRUCTURED_ANSWER");
   const a = parsed.data;
@@ -178,7 +210,7 @@ export function validateAssignments(
         !c.cards.some((card) => card.id === x.cardId) ||
         (x.groupId === null
           ? !c.allowUncertain
-          : !c.groups.some((g) => g.id === x.groupId)),
+          : !available.some((g) => g.id === x.groupId)),
     ) ||
     (complete && a.length !== c.cards.length)
   )
@@ -196,7 +228,7 @@ export function cardsortInput(
     if (!input.answer?.trim()) throw new Error("INVALID_STRUCTURED_ANSWER");
     return;
   }
-  return validateAssignments(q.cardsort!, input.value, true);
+  return validateAssignments(q.cardsort!, input.value, true, s.customGroups);
 }
 export function applyCardsort(
   i: Interview,
@@ -218,7 +250,7 @@ export function applyCardsort(
     answer: s.cardOrder
       .map((id) => {
         const a = assignments!.find((x) => x.cardId === id)!;
-        return `${q.cardsort!.cards.find((x) => x.id === id)!.text} → ${a.groupId === null ? cardsortCopy(i.language).uncertain : q.cardsort!.groups.find((g) => g.id === a.groupId)!.text}`;
+        return `${q.cardsort!.cards.find((x) => x.id === id)!.text} → ${a.groupId === null ? cardsortCopy(i.language).uncertain : [...q.cardsort!.groups, ...(s.customGroups || [])].find((g) => g.id === a.groupId)!.text}`;
       })
       .join("\n"),
     cardsort: { phase: "sort", assignments: structuredClone(assignments!) },
@@ -256,3 +288,55 @@ export function cardsortFormAssignments(
       )
     : [];
 }
+
+export function validateCustomGroups(
+  c: CardsortConfig,
+  value: unknown,
+): CustomSortGroup[] {
+  const groups = z.array(customGroupSchema).max(10).parse(value);
+  if (
+    ((!c.mode || c.mode === "closed") && groups.length) ||
+    new Set(groups.map((g) => g.id)).size !== groups.length ||
+    new Set(groups.map((g) => g.text.normalize("NFC").trim().toLowerCase()))
+      .size !== groups.length ||
+    groups.some((g) =>
+      c.groups.some(
+        (p) =>
+          p.text.normalize("NFC").trim().toLowerCase() ===
+          g.text.normalize("NFC").trim().toLowerCase(),
+      ),
+    ) ||
+    groups.some((g) => c.groups.some((p) => p.id === g.id))
+  )
+    throw Error("INVALID_STRUCTURED_ANSWER");
+  return groups;
+}
+export const categoryCopy = {
+  en: {
+    newName: "New group name",
+    add: "Add my group",
+    rename: "Rename my group",
+    remove: "Remove my group",
+    label: "Your group",
+    notice:
+      "Create your own categories. Labels are kept exactly as you write them and are not automatically merged with other participants’ categories.",
+  },
+  es: {
+    newName: "Nombre del nuevo grupo",
+    add: "Añadir mi grupo",
+    rename: "Renombrar mi grupo",
+    remove: "Eliminar mi grupo",
+    label: "Tu grupo",
+    notice:
+      "Crea tus categorías. Las etiquetas se conservan tal como las escribes y no se combinan automáticamente con las de otras personas.",
+  },
+  fr: {
+    newName: "Nom du nouveau groupe",
+    add: "Ajouter mon groupe",
+    rename: "Renommer mon groupe",
+    remove: "Supprimer mon groupe",
+    label: "Votre groupe",
+    notice:
+      "Créez vos catégories. Les libellés restent tels que vous les écrivez et ne sont pas fusionnés automatiquement avec ceux des autres participants.",
+  },
+};

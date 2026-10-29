@@ -1,3 +1,4 @@
+import { dispatchPulseSchedule } from "./pulse-schedule-server";
 import { z } from "zod";
 import { actor, canEdit, body, respond, fail } from "./http";
 import {
@@ -35,6 +36,8 @@ const waveInput = z.object({
   recruitment: z.string().trim().min(3).max(2000),
 });
 export async function dispatchPulse(req: Request, p: string[]) {
+  const schedule = await dispatchPulseSchedule(req, p);
+  if (schedule) return schedule;
   const studyRoute =
     p[0] === "studies" && p[1] && p[2] === "pulse" && p.length === 3;
   if (!studyRoute && p[0] !== "pulse") return null;

@@ -8,17 +8,101 @@ import {
   respond,
   limit,
 } from "./http";
-import { get, put, dirty, transaction, requireStudy, interviews } from "./db";
+import {
+  get,
+  put,
+  dirty,
+  transaction,
+  requireStudy,
+  interviews,
+  uid,
+} from "./db";
 import { retention } from "./features";
 import type { Interview, Study } from "./domain";
 import {
   assignmentSchema,
   cardsortState,
   validateAssignments,
+  validateCustomGroups,
 } from "./cardsort";
 import { cardsortResults } from "./cardsort-results";
 import { csv } from "./evidence";
 export async function dispatchCardsort(req: Request, p: string[]) {
+  if (
+    p[0] === "interviews" &&
+    p[1] &&
+    p[2] === "cardsort-groups" &&
+    p.length === 3 &&
+    req.method === "POST"
+  ) {
+    const initial = await participant(req, p[1]);
+    const input = z
+      .object({
+        requestId: z.uuid(),
+        version: z.number().int().min(0),
+        op: z.enum(["add", "rename", "remove"]),
+        id: z.string().max(100).optional(),
+        text: z.string().trim().min(1).max(100).optional(),
+        assignments: assignmentSchema,
+      })
+      .strict()
+      .parse(await body(req));
+    limit("cardsort-groups:" + initial.id, 60);
+    let i = initial;
+    await transaction(async () => {
+      i = (await get<Interview>("interview", initial.id))!;
+      if (!i) fail(404, "Interview not found.");
+      if (i.requests[input.requestId]) return;
+      if (
+        i.status !== "active" ||
+        i.version !== input.version ||
+        (i.pending && Date.now() - i.pending.at < 70000)
+      )
+        fail(409, "Interview changed. Reload before editing categories.");
+      const q = i.guide.questions[i.current],
+        s = cardsortState(i, q),
+        c = q.cardsort;
+      if (
+        q.type !== "cardsort" ||
+        !c ||
+        !s ||
+        s.phase !== "sort" ||
+        !c.mode ||
+        c.mode === "closed"
+      )
+        fail(409, "This question does not accept category edits.");
+      const groups = structuredClone(s.customGroups || []);
+      if (input.op === "add") {
+        if (input.id || !input.text) fail(400, "Provide a new category name.");
+        groups.push({ id: "participant_" + uid(), text: input.text });
+      } else {
+        const g = groups.find((g) => g.id === input.id);
+        if (!g) fail(404, "Your category is unavailable.");
+        if (input.op === "rename") {
+          if (!input.text) fail(400, "Provide a category name.");
+          g.text = input.text;
+        } else groups.splice(groups.indexOf(g), 1);
+      }
+      const assignments =
+        input.op === "remove"
+          ? input.assignments.filter((a) => a.groupId !== input.id)
+          : input.assignments;
+      try {
+        s.customGroups = validateCustomGroups(c, groups);
+        s.draft = validateAssignments(c, assignments, false, s.customGroups);
+      } catch {
+        fail(
+          400,
+          "Use at most ten distinct category names and valid card placements.",
+        );
+      }
+      i.version++;
+      i.requests[input.requestId] = { version: i.version };
+      await put("interview", i);
+      if (!i.preview) await dirty((await get<Study>("study", i.studyId))!);
+    });
+    return respond({ interview: publicInterview(i, true) });
+  }
   if (
     p[0] === "interviews" &&
     p[1] &&
@@ -53,7 +137,12 @@ export async function dispatchCardsort(req: Request, p: string[]) {
           409,
           "This sort has already been confirmed. Continue with the current question.",
         );
-      s.draft = validateAssignments(q.cardsort!, input.assignments, false);
+      s.draft = validateAssignments(
+        q.cardsort!,
+        input.assignments,
+        false,
+        s.customGroups,
+      );
       i.version++;
       i.requests[input.requestId] = { version: i.version };
       await put("interview", i);
@@ -129,6 +218,28 @@ export async function dispatchCardsort(req: Request, p: string[]) {
               String(g.count),
               String(card.denominator),
               g.percent === null ? "" : String(g.percent),
+              String(r.counts.incomplete),
+              String(r.counts.notAsked),
+              String(r.counts.invalid),
+              key || "",
+              value || "",
+            ]);
+          if (r.config.mode && r.config.mode !== "closed")
+            rows.push([
+              s.id,
+              r.revisionId,
+              r.questionId,
+              r.conceptId || "",
+              card.id,
+              card.text,
+              "",
+              "Participant-created category",
+              "false",
+              String(card.custom),
+              String(card.denominator),
+              card.denominator
+                ? String((100 * card.custom) / card.denominator)
+                : "",
               String(r.counts.incomplete),
               String(r.counts.notAsked),
               String(r.counts.invalid),
@@ -226,8 +337,9 @@ export async function dispatchCardsort(req: Request, p: string[]) {
               placement.groupId || "",
               placement.groupId === null
                 ? "Uncertain"
-                : r.config.groups.find((g) => g.id === placement.groupId)
-                    ?.text || "",
+                : [...r.config.groups, ...(o.customGroups || [])].find(
+                    (g) => g.id === placement.groupId,
+                  )?.text || "",
               String(placement.groupId === null),
               o.reason,
               o.turns.find((t) => t.phase === "sort")?.id || "",

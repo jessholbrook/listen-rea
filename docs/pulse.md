@@ -2,7 +2,7 @@
 
 Open **Pulse** in a published study to create a tracker. Its published guide, revision ID, audience text, moderation guidelines and declared recruitment protocol become an immutable baseline. The initial study is wave one. **Create next wave** copies the baseline into a separate, unpublished draft study. Review, publish and open fielding through the normal controls. Collaborators may edit/copy designs and review coding; only researchers/admins may launch fielding.
 
-Wave labels, dates and recruitment protocols can be edited with stale-write protection. Dates stay in wave order; they are planning metadata. Scheduling and recruitment are manual. This first stage provides recurring wave management, descriptive comparisons and a reviewed shared codebook. It does not provide automatic scheduling, external tracker integration, prediction, automatic theme discovery or latent/emotional inference.
+Wave labels, dates and recruitment protocols can be edited with stale-write protection. Dates stay in wave order; they are planning metadata. [Automatic draft-wave scheduling](advanced-research-methods.md) now uses reviewed calendar dates and the existing daily maintenance worker. Publication, fielding and recruitment remain manual. Recurring wave management, descriptive comparisons and a reviewed shared codebook remain unchanged. External tracker integration, prediction, automatic theme discovery and latent/emotional inference remain outside this implementation.
 
 ## Comparability
 

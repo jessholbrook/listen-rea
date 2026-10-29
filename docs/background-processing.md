@@ -36,7 +36,7 @@ The default local adapter uses Next.js `after` to run work after responding; it 
 
 `RESEARCH_TEST_PRODUCTION=1 npx tsx tests/background-browser.ts` checks English, Spanish and French mobile consent/start controls, status after closing the researcher page, independent worker completion and layout. It uses a marked transcription fixture. Hosted queue delivery and scheduled-maintenance configuration are verified separately before release.
 
-The next proposed milestone for approval is **Advanced research methods**: MaxDiff respondent-level modeling and portfolio optimization, open/hybrid card sorting and automated Pulse wave scheduling. Human pilot and domain-dependent email remain deferred.
+[Advanced research methods](advanced-research-methods.md) now add experimental hierarchical MaxDiff/portfolio comparisons, open/hybrid card sorting and automatic Pulse drafts to daily maintenance. The next proposed milestone is **Richer interviewing and usability analysis**. Human pilot and domain-dependent email remain deferred.
 
 ## Initial queue release — October 28, 2026
 
