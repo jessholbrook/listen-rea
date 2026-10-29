@@ -156,3 +156,5 @@ Remaining engineering bundles and deferred validation are summarized in [remaini
 [Delegated draft automation](docs/delegated-draft-automation.md) lets explicitly authorized static integrations create/edit private drafts under admin-selected operations, study scope and rolling limits. Publication and fielding retain their reviewed workflow.
 
 [Signed integration notifications](docs/integration-notifications.md) add disabled-by-default metadata destinations, receiver verification, durable queued delivery/retries, key rotation and private delivery logs.
+
+[Integration recovery](docs/integration-reconciliation.md) adds separately enabled static-key inventories, resumable checkpoints and stateless source-availability checks for catching up after missed notifications.

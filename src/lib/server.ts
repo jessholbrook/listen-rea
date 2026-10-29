@@ -1,3 +1,4 @@
+import { dispatchReconciliation } from "./reconciliation-server";
 import { dispatchNotifications } from "./notification-server";
 import { dispatchTremendous } from "./tremendous-server";
 import { enforceProlificReservation } from "./prolific-admission";
@@ -170,6 +171,8 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
       ok: (await db.prepare("SELECT 1 AS ready").get())?.ready === 1,
       aiConfigured: aiReady(),
     });
+  const recovery = await dispatchReconciliation(req, p);
+  if (recovery) return recovery;
   const notification = await dispatchNotifications(req, p);
   if (notification) return notification;
   const tremendous = await dispatchTremendous(req, p);

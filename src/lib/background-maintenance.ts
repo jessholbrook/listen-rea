@@ -1,3 +1,4 @@
+import { pruneReconciliation } from "./reconciliation-lifecycle";
 import { notificationMaintenance } from "./notification-store";
 import { publishNotificationWake } from "./notification-queue";
 import { tremendousMaintenance } from "./tremendous-queue";
@@ -22,6 +23,7 @@ export async function backgroundMaintenance(
 ) {
   await cleanup();
   await pruneBackgroundJobs();
+  await pruneReconciliation();
   const rows = await db
     .prepare(
       "SELECT data FROM documents WHERE kind='backgroundJob' AND json_extract(data,'$.state') IN ('queued','running') ORDER BY json_extract(data,'$.createdAt') LIMIT 100",
