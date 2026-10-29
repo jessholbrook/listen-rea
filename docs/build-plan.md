@@ -1,7 +1,7 @@
 # Build plan: an AI research workflow inspired by Listen Labs
 
 
-[Richer interviewing and task measures](richer-interviewing.md) add opt-in streaming voice, participant-requested screen-aware guidance/refocusing and explicit task timers with participant-reported outcomes. Researcher views keep original sources, method boundaries and reviewed exports separate from AI guidance. [Reporting and media expansion](reporting-media-expansion.md) is implemented. [Reviewed study automation](study-automation.md) is implemented. Provider selection/recruitment integration planning is next; actual provider accounts and payouts remain unconnected.
+[Richer interviewing and task measures](richer-interviewing.md) add opt-in streaming voice, participant-requested screen-aware guidance/refocusing and explicit task timers with participant-reported outcomes. Researcher views keep original sources, method boundaries and reviewed exports separate from AI guidance. [Reporting and media expansion](reporting-media-expansion.md) is implemented. [Reviewed study automation](study-automation.md) is implemented. [Provider comparison and integration planning](provider-integration-plan.md) is complete. The proposed next build is the Prolific recruitment connector with paid launch disabled by default; actual provider accounts and payouts remain unconnected.
 
 [Advanced research methods](advanced-research-methods.md) are implemented: experimental hierarchical MaxDiff/portfolio comparisons, open/hybrid card sorting and recurring Pulse draft scheduling. Richer interviewing is implemented in the subsequent bundle; reporting/media expansion is implemented. External recruitment and automation is next. Human method validation remains deferred.
 Draft for review with Jess · October 19, 2026
