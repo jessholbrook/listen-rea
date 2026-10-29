@@ -94,7 +94,8 @@
     "test:richer": "tsx tests/richer-browser.ts",
     "test:media": "tsx tests/media-expansion-browser.ts",
     "test:automation": "tsx tests/automation-browser.ts",
-    "test:prolific": "tsx tests/prolific-browser.ts"
+    "test:prolific": "tsx tests/prolific-browser.ts",
+    "test:tremendous": "tsx tests/tremendous-browser.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",

@@ -1,3 +1,4 @@
+import { dispatchTremendous } from "./tremendous-server";
 import { enforceProlificReservation } from "./prolific-admission";
 import { dispatchProlific } from "./prolific-server";
 import { dispatchAutomation } from "./study-automation-server";
@@ -168,6 +169,8 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
       ok: (await db.prepare("SELECT 1 AS ready").get())?.ready === 1,
       aiConfigured: aiReady(),
     });
+  const tremendous = await dispatchTremendous(req, p);
+  if (tremendous) return tremendous;
   const prolific = await dispatchProlific(req, p);
   if (prolific) return prolific;
   const automation = await dispatchAutomation(req, p);
@@ -676,7 +679,10 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
         ).length;
         if (reserved >= r.guide.limit)
           fail(409, "This study has reached its participant limit.");
-        await enforceProlificReservation(current, input.surveyHandoff?.provider);
+        await enforceProlificReservation(
+          current,
+          input.surveyHandoff?.provider,
+        );
         return await startInterview(
           current,
           r.guide,
@@ -688,9 +694,16 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
             }).filter(
               ([key]) =>
                 !input.surveyHandoff ||
-                !["responseid", "pid", "studyid", "rid", "prolific_pid", "study_id", "session_id", "prolific_token"].includes(
-                  key.toLowerCase(),
-                ),
+                ![
+                  "responseid",
+                  "pid",
+                  "studyid",
+                  "rid",
+                  "prolific_pid",
+                  "study_id",
+                  "session_id",
+                  "prolific_token",
+                ].includes(key.toLowerCase()),
             ),
           ),
           input.language ||

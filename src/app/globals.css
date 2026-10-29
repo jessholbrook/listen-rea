@@ -3828,3 +3828,27 @@ tr:last-child td {
 .prolific-panel .table-scroll {
   max-width: 100%;
 }
+
+.tremendous-panel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tremendous-panel .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.tremendous-panel input:not([type="checkbox"]),
+.tremendous-panel textarea {
+  width: 100%;
+  min-width: 0;
+}
+.tremendous-panel dd {
+  margin-left: 0;
+}
+.sandbox-reward {
+  text-align: left;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}

@@ -1,6 +1,6 @@
 # Remaining work after the core build
 
-Updated October 29, 2026 (UTC). The internal study-to-interview-to-evidence-to-handoff/planning workflow is built and deployed. Synthetic demo-readiness checks passed. Human quality validation remains uncompleted and is deferred again at Jess's request. Pilot admissions are paused; existing interviews and published content are preserved.
+Updated October 29, 2026 (America/Los_Angeles). The internal study-to-interview-to-evidence-to-handoff/planning workflow is built and deployed. Synthetic demo-readiness checks passed. Human quality validation remains uncompleted and is deferred again at Jess's request. Pilot admissions are paused; existing interviews and published content are preserved.
 
 These are remaining capabilities and recommended bundles, not newly approved implementation work. The original scope and evidence are in [the build plan](build-plan.md) and [feature inventory](listen-labs-feature-inventory.md).
 
@@ -26,4 +26,6 @@ Completed planning: [Recruitment and payout provider comparison](provider-integr
 
 Completed engineering: [Prolific recruitment connector](prolific-recruitment.md) — reviewed plans/provider drafts, separate no-credit/paid launch gates, native identifier/recovery/return handling, local cohort capacity, source-aware read-only reconciliation, deadline warnings and signed/queued webhook refresh. Production is unconnected and paid launch remains disabled. Actual Prolific account/API/no-credit validation is still outstanding; no live recruitment or compensation occurred.
 
-Recommended next approval: **Tremendous reward links for our own invitees**, with sandbox-only defaults and separate future production/payout controls. Prolific account setup/testing can be completed separately when credentials and no-credit access are available. Actual provider compensation writes remain unimplemented.
+Completed engineering: [Tremendous sandbox reward links](tremendous-sandbox.md) — reviewed plans and explicit simulated orders for approved own-invitation incentives, participant-token link claims, stable obligation references/retries, private reconciliation, signed/queued events and erasure-safe spent hashes. Deployment remains unconnected. Real Tremendous sandbox compatibility and production compensation remain unvalidated/unimplemented.
+
+Recommended next approval: **Provider connection readiness and guided sandbox validation** for Prolific/Tremendous. Prepare an account/setup checklist and run real sandbox/no-credit acceptance once credentials are available; no spending or production payout activation. If accounts remain deferred, choose a specific deeper partner-sync or automation need before expanding engineering scope. Production compensation also needs a separate financial-retention/earned-obligation decision.

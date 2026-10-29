@@ -11,7 +11,7 @@ function localOnly(file: string) {
     .some(
       (part) =>
         part.startsWith(".env") ||
-        [".data", "test-results", ".vercel"].includes(part),
+        [".data", "test-results", "tests", ".vercel"].includes(part),
     );
 }
 let removed = 0,

@@ -1,4 +1,5 @@
 "use client";
+import TremendousPanel from "./tremendous-panel";
 import AutomationPanel from "./automation-panel";
 import ProlificPanel from "./prolific-panel";
 import PrivatePPTX from "./private-pptx";
@@ -2169,6 +2170,11 @@ function Fielding({
         dataVersion={s.dataVersion}
       />
       <IncentivesPanel key={s.id} studyId={s.id} dataVersion={s.dataVersion} />
+      <TremendousPanel
+        key={s.id + ":tremendous"}
+        studyId={s.id}
+        dataVersion={s.dataVersion}
+      />
       <RecruitmentPanel
         studyId={s.id}
         dataVersion={s.dataVersion}

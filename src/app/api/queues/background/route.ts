@@ -1,3 +1,4 @@
+import { runTremendousWake } from "@/lib/tremendous-queue";
 import { runProlificWake } from "@/lib/prolific-queue";
 import { closeRealtime } from "@/lib/realtime-server";
 import { handleCallback } from "@vercel/queue";
@@ -19,6 +20,21 @@ export const POST = handleCallback(
       .safeParse(payload);
     if (expiry.success) {
       await closeRealtime(expiry.data.realtimeId);
+      return;
+    }
+    const tremendous = z
+      .object({
+        action: z.literal("syncTremendous"),
+        studyId: z.uuid(),
+        generation: z.string().min(1).max(64),
+      })
+      .strict()
+      .safeParse(payload);
+    if (tremendous.success) {
+      await runTremendousWake(
+        tremendous.data.studyId,
+        tremendous.data.generation,
+      );
       return;
     }
     const prolific = z

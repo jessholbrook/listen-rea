@@ -1439,3 +1439,27 @@ Six hosted groups pass on the exact candidate:
 Independent private Blob inspection confirms **0 files / 0 B**. Private verification environment/state files were removed. The project API confirms daily maintenance enabled at `0 5 * * *` on this exact deployment; no future scheduled firing or real provider-backed queue run is claimed.
 
 Actual Prolific API/account compatibility and no-credit test entitlement remain unvalidated until an account is connected. Initial recruitment scope is general eligible panel, desktop, USD/GBP and no in-interview screen-outs. Next proposed approval: **Tremendous reward links for our own invitees, sandbox-only by default**. Human pilot and domain-dependent live email remain deferred.
+
+
+## Tremendous sandbox reward links — October 29, 2026 (America/Los_Angeles)
+
+Verified release `dpl_73B3cLmsKVpjcgyAxQ9w2QveVXy7` ([immutable candidate](https://echo-7yxfne9ns-jessholbrook-gmailcoms-projects.vercel.app)) is promoted to https://echo-lab-psi.vercel.app. **Tremendous remains unconnected and live payouts are unavailable.** This release accepts sandbox TEST_ keys and a fixed sandbox host only; no production payout flag or endpoint exists. No provider account or credentials were added.
+
+**Fielding → Tremendous reward links** extends approved own-invitation USD incentives with a reviewed merchant gift-card plan, a simulated face-value budget and explicit per-obligation orders. Participants return in their original browser and use their interview token to open a link after approval. Link generation is participant-only and always rechecks the provider/source. Initial links and returned contact fields are discarded; redeemable URLs are absent from stored orders, researcher panels, ledgers, exports and integrations. Sandbox orders never mark the real incentive paid. See [workflow, setup, financial limits and erasure contract](tremendous-sandbox.md).
+
+Production build, standalone TypeScript, formatting and **629/629 automated regression tests** pass (zero skipped). Eleven focused connector cases cover production-key/host rejection, concurrent/exact order reservation, stable rejected retries, insufficient funds/unknown/pending/failed outcomes, current source/approval/role/connection/budget, claim privacy, erasure during provider requests, signed webhook deduplication, read-only queue processing, late-read fencing and fair bounded reconciliation. Five compiled-app browser workflows pass: Tremendous desktop/mobile participant reward links, manual incentives, invitations, Prolific and reporting/media. The final packaged build repeats the new reward workflow, eleven focused cases and real native media/PPTX export checks. All external provider responses in these local/browser checks are marked fixtures.
+
+An initial upload failed because Next's trace included test files excluded by `.vercelignore`. The release excludes tests both from tracing and from upload metadata preparation. Final verification finds six function configurations with no test/private-local references while retaining the FFmpeg binary and required font. The corrected prebuilt candidate deploys Ready.
+
+Six hosted groups pass on the exact candidate:
+
+- Reviewed sandbox plans save without credentials; verification, reconciliation and order actions fail closed before reservations/provider traffic. Live payouts remain unavailable.
+- Anonymous/non-admin mutations are denied; unconfigured webhooks and unauthenticated scheduled maintenance fail closed.
+- Native own-invitation completion and frozen USD incentive approval expose sandbox status only to the interview token; incentive approval never issues an order.
+- Explicitly marked hosted cached-order fixtures separate provider cost, delivery and unobserved redemption. The real incentive remains unpaid, CSV excludes answers/links, and an unconnected claim cannot generate a provider link. This does not validate actual vendor identity, API compatibility or fulfillment.
+- Source hold/erasure deletes local order/claim linkage and rejects replay, retaining only an unlinked spent hash.
+- Complete disposable workspace/source/session cleanup preserves the global user count and exact paused pilot. Zero actual provider, recruitment, payment, funding, model or email operations were used.
+
+Independent private Blob inspection confirms **0 files / 0 B**; private hosted verification environment/state files were removed. The existing daily maintenance registration is enabled on this deployment. Its Pacific schedule is 10 p.m. during daylight saving time and 9 p.m. during standard time; no new future firing or actual provider-backed queue run is claimed.
+
+Actual Tremendous sandbox compatibility, contact-free LINK acceptance and external fulfillment remain unvalidated until an account is connected. Source erasure cannot revoke previously disclosed provider links. Production payouts require separate account approval, cost/funding controls and a financial-retention/earned-compensation decision. Next proposed approval: **provider connection readiness and guided sandbox/no-credit validation**, without spending or production payout activation. Human pilot and domain-dependent live email remain deferred.

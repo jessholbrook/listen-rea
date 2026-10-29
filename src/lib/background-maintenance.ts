@@ -1,3 +1,4 @@
+import { tremendousMaintenance } from "./tremendous-queue";
 import { prolificMaintenance } from "./prolific-queue";
 import { reapRealtime } from "./realtime-server";
 import { runPulseSchedules } from "./pulse-schedule-server";
@@ -49,5 +50,6 @@ export async function backgroundMaintenance(
   await reapRealtime();
   const pulse = await runPulseSchedules();
   const prolific = await prolificMaintenance();
-  return { ok: true, dispatched, pending, pulse, prolific };
+  const tremendous = await tremendousMaintenance();
+  return { ok: true, dispatched, pending, pulse, prolific, tremendous };
 }
