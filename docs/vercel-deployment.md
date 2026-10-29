@@ -1529,3 +1529,21 @@ Six hosted verification groups passed on the exact promoted candidate:
 Private recording storage independently reports **0 files / 0 B**. Private hosted environment/state files were removed. The existing daily maintenance registration is enabled on this release at `0 5 * * *`; recovery pruning joins that maintenance path. No new future scheduled firing is claimed. Runs expire after 24 hours; run metadata and content-free creation receipts age out after seven days. Integrations must use new UUIDs for new operations and check their own previously fetched references; current inventories are not historical deletion feeds. Checkpoint completion cannot prove an external copy was updated or recall content already fetched. Hosted analysis eligibility was not separately exercised; local scoped-read parity covers it.
 
 PR #11 is merged. Provider account connection/testing, the human pilot and domain-dependent live email remain deferred. Next proposed approval: **reusable integration client and recovery example**, with a typed client and disposable-destination demonstration of signed wake-ups, catch-up, safe retries and unavailable-source removal.
+
+
+## Standalone integration client/example — October 29, 2026 (America/Los_Angeles)
+
+PR #12 is merged. The [typed integration client and disposable recovery example](integration-client.md) add repository tooling against the existing production APIs; no hosted application route/UI/configuration changes require a new deployment. The application remains live as `dpl_7KcpRkdJXBSEzTEoRg9YEoyux4H9` at https://echo-lab-psi.vercel.app. No public receiver, enabled notification destination or approved origin is created. The client is source code to reuse, not a published npm package.
+
+Production build, standalone TypeScript and formatting pass. **669/669 compiled-app regression tests** pass with zero skipped. A final eight-case contract rerun adds an actual loopback HTTP CLI-receiver check, covering challenge echo, duplicate events and body bounds; six real-API sync cases validate private durable state, saved checkpoint intents, failed disk writes, lost acknowledgment replay, source drift/erasure and authority loss. The final account-free demo passes. Local notification input is explicitly marked; no browser/application flow changed.
+
+Six hosted groups against the exact existing production deployment pass:
+
+- The standalone client's default transport performs actual HTTPS through the inherited proxy/CA configuration, respects disabled recovery and writes a private page plus acknowledgment intent before confirming it.
+- A real committed checkpoint response is deliberately discarded. Reopening the destination retries the original acknowledgment and completes without duplicate source copies or stored API credentials.
+- A marked in-process signed wake-up and duplicate create one durable inbox receipt; this is not an external receiver/queue test.
+- A genuinely erased hosted response disappears from the local destination after a fresh scoped availability check, without a deletion event.
+- Disabling recovery stops synchronization without using authorization denial as a deletion assertion; model/provider/email usage is zero.
+- Complete synthetic workspace/source/key/session cleanup preserves the global user count and exact paused pilot. The temporary local destination and private verification environment/state files are removed; no recording was uploaded.
+
+These tools run from the checkout with `npm run integration:demo`, `integration:sync` and `integration:receive`. The sample receiver is loopback-only, the destination is bounded/private/single-machine, and future production destinations need separately reviewed operations/retention. Source erasure cannot recall independently downloaded copies. The approved account-independent integration build queue is complete; provider connection/real-provider validation, human pilot and domain-dependent live email remain deferred.

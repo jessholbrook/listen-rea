@@ -98,7 +98,10 @@
     "test:tremendous": "tsx tests/tremendous-browser.ts",
     "test:delegation": "tsx tests/delegated-drafts-browser.ts",
     "test:notifications": "tsx tests/notifications-browser.ts",
-    "test:reconciliation": "tsx tests/reconciliation-browser.ts"
+    "test:reconciliation": "tsx tests/reconciliation-browser.ts",
+    "integration:demo": "tsx examples/integration-recovery/demo.ts",
+    "integration:sync": "tsx examples/integration-recovery/run.ts sync",
+    "integration:receive": "tsx examples/integration-recovery/run.ts receive"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",
