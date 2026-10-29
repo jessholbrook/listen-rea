@@ -1,3 +1,4 @@
+import { runNotificationWake } from "@/lib/notification-queue";
 import { runTremendousWake } from "@/lib/tremendous-queue";
 import { runProlificWake } from "@/lib/prolific-queue";
 import { closeRealtime } from "@/lib/realtime-server";
@@ -11,6 +12,21 @@ const message = z
   .strict();
 export const POST = handleCallback(
   async (payload) => {
+    const notification = z
+      .object({
+        action: z.literal("notifyIntegration"),
+        workspaceId: z.uuid(),
+        generation: z.uuid(),
+      })
+      .strict()
+      .safeParse(payload);
+    if (notification.success) {
+      await runNotificationWake(
+        notification.data.workspaceId,
+        notification.data.generation,
+      );
+      return;
+    }
     const expiry = z
       .object({
         realtimeId: z.string().regex(/^[a-f0-9]{64}$/),

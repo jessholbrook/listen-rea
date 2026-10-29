@@ -1,3 +1,5 @@
+import { runNotificationWake } from "../src/lib/notification-queue";
+import type { NotificationWake } from "../src/lib/integration-notifications";
 import { db } from "../src/lib/db";
 import { runBackgroundMessage } from "../src/lib/background-worker";
 import { backgroundMaintenance } from "../src/lib/background-maintenance";
@@ -26,6 +28,24 @@ do {
       await runBackgroundMessage({ jobId: j.id, wake: j.wake }, { publish });
     } catch {
       console.warn("BACKGROUND_DELIVERY_DEFERRED");
+    }
+  }
+  const notification = await db
+    .prepare(
+      "SELECT data FROM documents WHERE kind='notificationWake' AND json_extract(data,'$.nextAt')<=? AND COALESCE(json_extract(data,'$.leaseUntil'),0)<=? ORDER BY rowid LIMIT 1",
+    )
+    .get(Date.now(), Date.now());
+  if (notification) {
+    const w = JSON.parse(String(notification.data)) as NotificationWake;
+    try {
+      await runNotificationWake(
+        w.workspaceId,
+        w.generation,
+        undefined,
+        publish,
+      );
+    } catch {
+      console.warn("NOTIFICATION_DELIVERY_DEFERRED");
     }
   }
   if (!once && !stopped) await new Promise((r) => setTimeout(r, 1000));

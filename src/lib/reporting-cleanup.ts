@@ -1,3 +1,4 @@
+import { clearStudyNotifications } from "./notification-store";
 import { db, list, put, uid, now } from "./db";
 import type { Study } from "./domain";
 import type { RenderJob, MediaClip, MediaReel } from "./reporting";
@@ -20,6 +21,7 @@ export async function queueRenderDeletion(
   }
 }
 export async function clearReporting(s: Study) {
+  await clearStudyNotifications(s.workspaceId, s.id);
   const cfg = await db
     .prepare(
       "SELECT data FROM documents WHERE kind='prolificConfig' AND id=? AND workspace_id=?",

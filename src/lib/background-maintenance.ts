@@ -1,3 +1,5 @@
+import { notificationMaintenance } from "./notification-store";
+import { publishNotificationWake } from "./notification-queue";
 import { tremendousMaintenance } from "./tremendous-queue";
 import { prolificMaintenance } from "./prolific-queue";
 import { reapRealtime } from "./realtime-server";
@@ -51,5 +53,14 @@ export async function backgroundMaintenance(
   const pulse = await runPulseSchedules();
   const prolific = await prolificMaintenance();
   const tremendous = await tremendousMaintenance();
-  return { ok: true, dispatched, pending, pulse, prolific, tremendous };
+  const notifications = await notificationMaintenance(publishNotificationWake);
+  return {
+    ok: true,
+    dispatched,
+    pending,
+    pulse,
+    prolific,
+    tremendous,
+    notifications,
+  };
 }

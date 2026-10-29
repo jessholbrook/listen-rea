@@ -1,4 +1,5 @@
 "use client";
+import NotificationPanel from "./notification-panel";
 import TremendousPanel from "./tremendous-panel";
 import AutomationPanel from "./automation-panel";
 import ProlificPanel from "./prolific-panel";
@@ -3049,6 +3050,7 @@ function SettingsPanel({ user, close }: { user: Actor; close: () => void }) {
       )}
       {user.role === "admin" && <ApiKeyPanel />}
       {user.role === "admin" && <AutomationPanel />}
+      {user.role === "admin" && <NotificationPanel />}
       {user.role === "admin" && <OAuthConnectionsPanel />}
       <h3>Provider usage</h3>
       {data?.usage.length ? (
