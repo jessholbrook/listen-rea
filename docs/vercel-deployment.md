@@ -1395,3 +1395,25 @@ Six hosted verification groups pass on the exact release candidate:
 Independent Vercel Blob checks show `echo-lab-recordings` at **0 files / 0 B** after cleanup. Private verification environment/state files were removed. The paused pilot remains untouched. The project API confirms daily maintenance is enabled at `0 5 * * *` on this deployment; no new observation of a future scheduled firing is claimed.
 
 Human research/audio quality, scientific interpretation and native PowerPoint visual fidelity remain unvalidated. Next proposed approval: **External recruitment and automation**; human pilot and domain-dependent email remain deferred.
+
+
+## Reviewed study automation — October 29, 2026
+
+Deployment `dpl_BbkTyZrcxBPe4NGEegZsswPSi8GT` is independently verified **Ready** at https://echo-lab-psi.vercel.app. The immutable candidate is https://echo-3fsg0z12g-jessholbrook-gmailcoms-projects.vercel.app. Hosted checks passed before promotion; inspection of the main URL confirms that exact deployment and health returns `ok:true` and `aiConfigured:true`.
+
+**Team & settings → Reviewed study automation** now provides per-static-key enablement/operation selection and an admin change-request inbox. Enabled integrations can read selected drafts and submit create/edit/publish/fielding requests over REST/MCP. Admins inspect readable guide/admission previews plus complete advanced settings, then apply or reject each request. Requests never apply themselves. Existing key scopes and OAuth access retain their current read behavior by default. See [contract, API, consistency and limits](study-automation.md).
+
+Validation: production build, standalone TypeScript, formatting and **609/609 compiled automated tests** pass (zero skipped). The automation desktop/mobile browser workflow and existing API-key and OAuth browser regressions pass. A hosted erasure check identified an applied creation-request index gap; the fix rebinds that index and removes older records by their stored study ID. The regression now exercises both current and older creation-request indexes before source erasure.
+
+Six hosted groups pass on the exact candidate:
+
+- Default read access, separate admin enablement, role/consent gates and MCP discovery.
+- Real MCP creation requests that leave studies untouched until an admin decision; exact submission/decision retry, one resulting draft and explicit access to that created study.
+- Reviewed edits/history, publication that leaves initial fielding paused, separate opening and one disposable typed synthetic interview.
+- Post-review study drift rejection, explicit rejection and fresh reviewed pause.
+- Source erasure of guide/request copies and replay rejection through content-free receipts; disabling permissions removes automation tools/access and key revocation ends bearer access. Provider usage is zero: no model calls, paid recruitment, payouts or email.
+- Complete disposable workspace/source/key/session cleanup, unchanged global user count and exact paused-pilot document preservation.
+
+Private verification environment/state files were removed. Independent private Blob checks show **0 files / 0 B**. The project API confirms enabled daily maintenance (`0 5 * * *`) on this exact deployment; no new scheduled firing observation is claimed.
+
+Jess chose automation first because no panel/payout accounts exist yet. Actual provider connections, autonomous execution beyond reviewed requests, recruitment spending and payouts remain unimplemented. Next proposed approval: **provider selection and a concrete recruitment/payout integration plan**. Human pilot and domain-dependent live email remain deferred.

@@ -1,4 +1,5 @@
 "use client";
+import AutomationPanel from "./automation-panel";
 import PrivatePPTX from "./private-pptx";
 import PPTXTextPanel from "./pptx-text-panel";
 import PrivateDOCX from "./private-docx";
@@ -3039,6 +3040,7 @@ function SettingsPanel({ user, close }: { user: Actor; close: () => void }) {
         </label>
       )}
       {user.role === "admin" && <ApiKeyPanel />}
+      {user.role === "admin" && <AutomationPanel />}
       {user.role === "admin" && <OAuthConnectionsPanel />}
       <h3>Provider usage</h3>
       {data?.usage.length ? (
