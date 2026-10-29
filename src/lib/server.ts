@@ -1,3 +1,5 @@
+import { dispatchClipSuggestions } from "./clip-suggestions-server";
+import { dispatchPresentationImport } from "./presentation-import-server";
 import { dispatchRealtime, stopRealtimeTurn } from "./realtime-server";
 import {
   dispatchTaskActivity,
@@ -207,6 +209,10 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
   if (cardsort) return cardsort;
   const maxdiff = await dispatchMaxdiff(req, p);
   if (maxdiff) return maxdiff;
+  const clipSuggestions = await dispatchClipSuggestions(req, p);
+  if (clipSuggestions) return clipSuggestions;
+  const presentationImport = await dispatchPresentationImport(req, p);
+  if (presentationImport) return presentationImport;
   const pricing = await dispatchPricing(req, p);
   if (pricing) return pricing;
   const visual = await dispatchVisual(req, p);
