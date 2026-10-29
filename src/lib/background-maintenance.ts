@@ -1,3 +1,4 @@
+import { reapRealtime } from "./realtime-server";
 import { runPulseSchedules } from "./pulse-schedule-server";
 import { timingSafeEqual, createHash } from "node:crypto";
 import { db, get, list } from "./db";
@@ -44,6 +45,7 @@ export async function backgroundMaintenance(
       "DELETE FROM documents WHERE kind='backgroundJob' AND json_extract(data,'$.state') IN ('complete','cancelled') AND json_extract(data,'$.updatedAt')<?",
     )
     .run(new Date(Date.now() - 7 * 86400000).toISOString());
+  await reapRealtime();
   const pulse = await runPulseSchedules();
   return { ok: true, dispatched, pending, pulse };
 }

@@ -1,4 +1,5 @@
 "use client";
+import TaskResultsPanel from "./task-results-panel";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/client";
 import {
@@ -170,6 +171,7 @@ export default function VisualPanel({ studyId }: { studyId: string }) {
   if (!data && !error) return <Spinner />;
   return (
     <div className="visual-stack">
+      <TaskResultsPanel studyId={studyId} />
       {error && (
         <div role="alert">
           <Notice>{error}</Notice>

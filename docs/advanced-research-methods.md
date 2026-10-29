@@ -32,7 +32,7 @@ Each occurrence atomically creates an unpublished, unfielded copy of the immutab
 
 ## Next milestone
 
-Richer interviewing and usability analysis: streaming voice with automatic interruption, screen-aware probes, off-task recovery and carefully scoped behavioral measures. Human pilot validation and domain-dependent email remain deferred.
+[Richer interviewing and task measures](richer-interviewing.md) are implemented as the subsequent bundle: opt-in streaming voice, requested screen guidance/refocusing, explicit task timers and participant-reported outcomes. Reporting/media expansion is the next proposed bundle. Human pilot validation and domain-dependent email remain deferred.
 
 ## Release validation
 

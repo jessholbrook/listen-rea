@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/client";
 import ParticipantImageUpload from "../../participant-image-upload";
-import VoiceInput from "../../voice-input";
+import VoiceModes from "../../voice-modes";
+import TaskTimer from "../../task-timer";
 import ScreenCapture from "../../screen-capture";
 import { pricingCopy } from "@/lib/pricing";
 import CardsortInput from "../../cardsort-input";
@@ -56,6 +57,7 @@ export default function Participant({ id }: { id: string }) {
     [audioBusy, setAudioBusy] = useState(false),
     [source, setSource] = useState<"typed" | "transcribed">("typed");
   const [screenBusy, setScreenBusy] = useState(false);
+  const [taskBusy, setTaskBusy] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
   const [value, setValue] = useState<Turn["value"]>(undefined);
   const language: Language = i?.language || info?.language || "en";
@@ -432,7 +434,7 @@ export default function Participant({ id }: { id: string }) {
     text: string;
     audio: { audioId: string; durationMs: number };
   }): Promise<boolean> {
-    if (!i || screenBusy || imageBusy) return false;
+    if (!i || screenBusy || taskBusy || imageBusy) return false;
     const text = voice?.text ?? answer;
     const recording = voice?.audio ?? audio;
     setBusy(true);
@@ -791,6 +793,16 @@ export default function Participant({ id }: { id: string }) {
                     />
                     <PDFPromptCitation interview={i} token={token} />
                     {q?.task && (
+                      <TaskTimer
+                        key={i.version}
+                        interviewId={i.id}
+                        version={i.version}
+                        token={token}
+                        language={language}
+                        onBlocking={setTaskBusy}
+                      />
+                    )}
+                    {q?.task && (
                       <ScreenCapture
                         key={i.version}
                         language={language}
@@ -973,7 +985,11 @@ export default function Participant({ id }: { id: string }) {
                               interview={i}
                               token={token}
                               disabled={
-                                busy || audioBusy || screenBusy || imageBusy
+                                busy ||
+                                audioBusy ||
+                                screenBusy ||
+                                taskBusy ||
+                                imageBusy
                               }
                               onBusy={setImageBusy}
                               onInterview={setI}
@@ -985,7 +1001,11 @@ export default function Participant({ id }: { id: string }) {
                               interview={i}
                               token={token}
                               disabled={
-                                busy || audioBusy || screenBusy || imageBusy
+                                busy ||
+                                audioBusy ||
+                                screenBusy ||
+                                taskBusy ||
+                                imageBusy
                               }
                               onBusy={setImageBusy}
                               onInterview={setI}
@@ -997,7 +1017,11 @@ export default function Participant({ id }: { id: string }) {
                               interview={i}
                               token={token}
                               disabled={
-                                busy || audioBusy || screenBusy || imageBusy
+                                busy ||
+                                audioBusy ||
+                                screenBusy ||
+                                taskBusy ||
+                                imageBusy
                               }
                               onBusy={setImageBusy}
                               onInterview={setI}
@@ -1009,7 +1033,11 @@ export default function Participant({ id }: { id: string }) {
                               interview={i}
                               token={token}
                               disabled={
-                                busy || audioBusy || screenBusy || imageBusy
+                                busy ||
+                                audioBusy ||
+                                screenBusy ||
+                                taskBusy ||
+                                imageBusy
                               }
                               onBusy={setImageBusy}
                               onInterview={setI}
@@ -1020,8 +1048,7 @@ export default function Participant({ id }: { id: string }) {
                               disabled={imageBusy}
                               style={{ border: 0, padding: 0, margin: 0 }}
                             >
-                              <VoiceInput
-                                key={i.version}
+                              <VoiceModes
                                 language={language}
                                 interviewId={i.id}
                                 token={token}
@@ -1060,6 +1087,7 @@ export default function Participant({ id }: { id: string }) {
                             busy ||
                             audioBusy ||
                             screenBusy ||
+                            taskBusy ||
                             imageBusy ||
                             (q?.type === "open" && !answer.trim()) ||
                             (q?.type === "choice" && !option) ||
@@ -1115,7 +1143,9 @@ export default function Participant({ id }: { id: string }) {
             <div style={{ textAlign: "center", marginTop: 28 }}>
               <button
                 className="text-button"
-                disabled={busy || audioBusy || screenBusy || imageBusy}
+                disabled={
+                  busy || audioBusy || screenBusy || taskBusy || imageBusy
+                }
                 onClick={async () => {
                   if (
                     !confirm(

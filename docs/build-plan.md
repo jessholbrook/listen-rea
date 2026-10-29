@@ -1,7 +1,9 @@
 # Build plan: an AI research workflow inspired by Listen Labs
 
 
-[Advanced research methods](advanced-research-methods.md) are implemented: experimental hierarchical MaxDiff/portfolio comparisons, open/hybrid card sorting and recurring Pulse draft scheduling. Richer interviewing and usability analysis is the next proposed bundle. Human method validation remains deferred.
+[Richer interviewing and task measures](richer-interviewing.md) add opt-in streaming voice, participant-requested screen-aware guidance/refocusing and explicit task timers with participant-reported outcomes. Researcher views keep original sources, method boundaries and reviewed exports separate from AI guidance. Reporting/media expansion is the next proposed bundle.
+
+[Advanced research methods](advanced-research-methods.md) are implemented: experimental hierarchical MaxDiff/portfolio comparisons, open/hybrid card sorting and recurring Pulse draft scheduling. Richer interviewing is implemented in the subsequent bundle; reporting/media expansion is next. Human method validation remains deferred.
 Draft for review with Jess · October 19, 2026
 
 Build one complete research loop first: **design a study → invite participants → run adaptive interviews → review responses → share findings backed by source evidence.** Voice belongs in the first usable pilot. Text comes first as a small implementation checkpoint so we can test interview logic before adding audio complexity.
