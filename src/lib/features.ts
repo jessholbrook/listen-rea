@@ -1,3 +1,4 @@
+import { hangupRealtime } from "./realtime-provider";
 import { recordingDraftRetention } from "./library-recording-lifecycle";
 import { clearLibraryAnswers, pruneLibraryCollections } from "./db";
 import {
@@ -199,6 +200,20 @@ async function purge(i: Interview) {
     await clearResponseInvitation(i);
     await clearResponseHandoff(i);
     await clearResponseIncentives(i);
+    const realtimeCalls = (
+      await db
+        .prepare(
+          "SELECT data FROM documents WHERE kind='realtimeCall' AND workspace_id=? AND json_extract(data,'$.interviewId')=?",
+        )
+        .all(i.workspaceId, i.id)
+    )
+      .map((r) => JSON.parse(String(r.data)).callId)
+      .filter(Boolean);
+    await db
+      .prepare(
+        "DELETE FROM documents WHERE workspace_id=? AND kind IN ('realtimeCall','taskAttempt','taskProbe') AND json_extract(data,'$.interviewId')=?",
+      )
+      .run(i.workspaceId, i.id);
     await db
       .prepare("DELETE FROM documents WHERE kind='interview' AND id=?")
       .run(i.id);
@@ -252,12 +267,13 @@ async function purge(i: Interview) {
       workspaceId: i.workspaceId,
       studyId: i.studyId,
       files,
+      realtimeCalls,
       createdAt: now(),
     });
   });
   await cleanDeletions();
 }
-export async function cleanDeletions() {
+export async function cleanDeletions(hangup = hangupRealtime) {
   for (const r of await db
     .prepare("SELECT id,data FROM documents WHERE kind='deletion'")
     .all()) {
@@ -296,7 +312,23 @@ export async function cleanDeletions() {
       continue;
     }
     try {
-      for (const id of job.files) await deleteRecording(id);
+      let failed = false;
+      // Provider availability must never prevent private-byte erasure.
+      for (const id of job.files) {
+        try {
+          await deleteRecording(id);
+        } catch {
+          failed = true;
+        }
+      }
+      for (const call of job.realtimeCalls || []) {
+        try {
+          await hangup(call);
+        } catch {
+          failed = true;
+        }
+      }
+      if (failed) continue;
       await db
         .prepare("DELETE FROM documents WHERE kind='deletion' AND id=?")
         .run(r.id);

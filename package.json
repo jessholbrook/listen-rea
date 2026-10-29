@@ -90,7 +90,8 @@
     "worker": "tsx --env-file-if-exists=.env.local scripts/background-worker.ts",
     "test:background": "tsx --test tests/background-jobs.test.ts",
     "evaluate:hierarchical": "tsx scripts/evaluate-hierarchical-maxdiff.ts",
-    "test:advanced": "tsx tests/advanced-methods-browser.ts"
+    "test:advanced": "tsx tests/advanced-methods-browser.ts",
+    "test:richer": "tsx tests/richer-browser.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",

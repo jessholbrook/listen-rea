@@ -1,4 +1,5 @@
 "use client";
+import LiveTaskHelp from "./live-task-help";
 import { copy, participantError } from "@/lib/participant-copy";
 import type { Language } from "@/lib/localization";
 import { useEffect, useRef, useState } from "react";
@@ -382,6 +383,17 @@ export default function ScreenCapture({
   return (
     <section className="screen-capture" aria-label={t("Task screen recording")}>
       <h3>{t("Try the task")} </h3>
+      {recording && capture.current && (
+        <LiveTaskHelp
+          key={capture.current.id}
+          language={language}
+          interviewId={interviewId}
+          token={token}
+          version={version}
+          captureId={capture.current.id}
+          getStream={() => stream.current}
+        />
+      )}
       {task.url && (
         <a
           className="button"

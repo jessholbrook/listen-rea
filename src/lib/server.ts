@@ -1,3 +1,9 @@
+import { dispatchRealtime, stopRealtimeTurn } from "./realtime-server";
+import {
+  dispatchTaskActivity,
+  requireClosedTaskAttempts,
+} from "./usability-activity-server";
+import { dispatchTaskProbe } from "./task-probe-server";
 import { dispatchBackgroundJobs } from "./background-jobs-server";
 import {
   dispatchParticipantPPTXs,
@@ -209,6 +215,12 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
   if (localized) return localized;
   const library = await dispatchLibrary(req, p);
   if (library) return library;
+  const realtime = await dispatchRealtime(req, p);
+  if (realtime) return realtime;
+  const taskActivity = await dispatchTaskActivity(req, p);
+  if (taskActivity) return taskActivity;
+  const taskProbe = await dispatchTaskProbe(req, p);
+  if (taskProbe) return taskProbe;
   const screen = await dispatchScreen(req, p);
   if (screen) return screen;
   const workflow = await dispatchWorkflow(req, p);
@@ -835,7 +847,10 @@ async function answerInterview(req: Request, initial: Interview) {
     await validateParticipantPDF(i, input.participantPDFId);
     await validateParticipantPPTX(i, input.participantPPTXId);
     await validateParticipantDOCX(i, input.participantDOCXId);
-    if (q.task) await requireClosedCaptures(i);
+    if (q.task) {
+      await requireClosedCaptures(i);
+      await requireClosedTaskAttempts(i);
+    }
     if (q.type === "cardsort") cardsortInput(i, q, input);
     else if (q.type === "maxdiff") maxdiffInput(i, q, input.value);
     else if (q.type === "pricing") pricingInput(i, q, input);
@@ -858,6 +873,7 @@ async function answerInterview(req: Request, initial: Interview) {
   if (duplicate)
     return respond({ interview: publicInterview(i, true), ai: aiReady() });
   try {
+    await stopRealtimeTurn(i);
     const q = i.guide.questions[i.current];
     let probe: string | null = null,
       strategy: Turn["strategy"] = "guide";

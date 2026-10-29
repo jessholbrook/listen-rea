@@ -28,3 +28,5 @@ All 144 automated tests, strict TypeScript, production compilation, two compiled
 Source: [Listen Labs concept testing](https://docs.listenlabs.com/setup-to-launch/concept-testing), which documents URL/media concepts. This stage supports external links; iframe embedding and behavioral measurement are separate.
 
 Private video concepts are implemented; see [video rules](concept-videos.md). [Timed concept presentation](timed-concepts.md) is implemented. [Single-/multiple-choice image answers](answer-images.md) are implemented. [Ranking and MaxDiff image answers](ranking-maxdiff-images.md) are implemented. [Study media watermarks](media-watermarks.md) are implemented. [One-time concept video viewing](one-time-video.md) is implemented. Next proposed build for approval: **participant confidentiality acknowledgements (F11)**.
+
+Optional [task timer and reported-outcome controls](richer-interviewing.md) are available on screen-recording task questions. They measure explicit controls in Echo Lab and participant reports; they do not instrument external prototype actions or verify success.
