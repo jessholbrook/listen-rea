@@ -3774,3 +3774,20 @@ tr:last-child td {
 .reporting-stack :is(audio, video) {
   max-width: 100%;
 }
+
+.automation-panel fieldset.automation-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.automation-panel pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 420px;
+  overflow: auto;
+  font-size: 11px;
+}
+.automation-panel .button {
+  white-space: normal;
+}

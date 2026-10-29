@@ -1,5 +1,7 @@
 # Read-only API and scoped keys
 
+[Reviewed study automation](study-automation.md) is available through separately enabled `/api/v1/automation` endpoints. Existing read endpoints and default key permissions remain unchanged. Integrations submit requests; an admin inspects and applies each change in Echo Lab.
+
 The F40 initial stage is a versioned, server-to-server JSON API at `/api/v1`. It uses the existing database; no domain, email provider or new service is needed. Resend sending remains deferred at Jess’s request. This API cannot edit research, publish/open fielding, admit participants, send email, spend money or download recordings.
 
 ## Create and rotate a key

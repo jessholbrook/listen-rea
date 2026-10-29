@@ -99,10 +99,12 @@ export default function ApiKeyPanel() {
         </button>
       </div>
       <p>
-        Grant selected study reads to a script or integration. Keys cannot edit
-        studies, launch interviews, send email, pay incentives or retrieve
-        recordings. Original answers and reviewed memos can contain personal
-        information.
+        Grant selected study reads to a script or integration. Keys cannot
+        directly edit studies, launch interviews, send email, pay incentives or
+        retrieve recordings. Original answers and reviewed memos can contain
+        personal information. Separately enabling Reviewed study automation
+        below permits draft reads and change requests; only an admin can apply
+        those requests.
       </p>
       {error && (
         <p role="alert" className="notice error">

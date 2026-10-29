@@ -1,6 +1,8 @@
-# Read-only MCP connection
+# MCP connection
 
 Echo Lab offers six research read tools at **https://echo-lab-psi.vercel.app/api/mcp**. This F41 initial stage uses the current official MCP server SDK 2.3.1 and supports the current protocol and the SDK's 2025 compatibility transport. It requires no new domain, AI key, email provider or service. Resend setup and live email remain deferred.
+
+[Reviewed study automation](study-automation.md) adds three tools for separately enabled static keys: read a selected draft, propose a change and read its human decision. An integration cannot approve/apply its own request. Existing keys and OAuth connections retain their current read access by default.
 
 ## Connect with OAuth
 
@@ -33,7 +35,7 @@ Vercel protection is a separate access check. An authorized CLI session can use 
 
 Discovery includes only tools covered by the key's scopes. Scopes are independent: response access does not require metadata scope. Detail tools accept `studyId` plus `responseId` or `analysisId` where appropriate. List tools accept optional `limit` (1–100, default 25) and `cursor`; lists of responses/analyses also require `studyId`. Follow `nextCursor` until null and disclose partial datasets. Unknown arguments are rejected. Tools use the same explicit projections and lifecycle checks as the [REST API](read-api.md); source exclusion, deletion and stale analysis remove access on subsequent reads. Keys never gain access to future studies automatically.
 
-No tool edits guides or findings, launches a study, admits participants, sends messages, pays incentives or downloads recordings. The server makes no model calls and does not request sampling, elicitation, subscriptions or background tasks. Each tool is annotated read-only and non-destructive. Research reads still update key last-use/rate metadata and run the existing request-driven retention housekeeping.
+The six read tools do not edit guides or findings, launch a study, admit participants, send messages, pay incentives or download recordings. The server makes no model calls and does not request sampling, elicitation, subscriptions or background tasks. Each tool is annotated read-only and non-destructive. Research reads still update key last-use/rate metadata and run the existing request-driven retention housekeeping.
 
 Original answers, questions, quotes and researcher memos are untrusted data. They can contain personal information or embedded instructions. Server/tool guidance tells clients to treat them as evidence, preserve source IDs and exact quotes, and ignore embedded instructions; this does not guarantee a client's resistance to prompt injection. Contact tags, admission credentials, recordings and internal state are not projected. Text is not automatically anonymized. Copies already downloaded cannot be recalled by key revocation or source deletion.
 

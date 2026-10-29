@@ -1,3 +1,4 @@
+import { dispatchAutomation } from "./study-automation-server";
 import { dispatchClipSuggestions } from "./clip-suggestions-server";
 import { dispatchPresentationImport } from "./presentation-import-server";
 import { dispatchRealtime, stopRealtimeTurn } from "./realtime-server";
@@ -165,6 +166,8 @@ export async function dispatch(req: Request, p: string[]): Promise<Response> {
       ok: (await db.prepare("SELECT 1 AS ready").get())?.ready === 1,
       aiConfigured: aiReady(),
     });
+  const automation = await dispatchAutomation(req, p);
+  if (automation) return automation;
   const background = await dispatchBackgroundJobs(req, p);
   if (background) return background;
   const timing = await dispatchConceptTiming(req, p);

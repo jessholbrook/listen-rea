@@ -1,3 +1,6 @@
+import { automationApi, automationGrant } from "./study-automation-server";
+import { mcpAutomationTools } from "./mcp-tools";
+import { ZodError } from "zod";
 import { randomUUID } from "node:crypto";
 import { McpServer, createMcpHandler } from "@modelcontextprotocol/server";
 import { authenticateReadKey } from "./read-api-auth";
@@ -132,6 +135,7 @@ export async function handleMcp(req: Request) {
         return new Response(null, { status: 202, headers });
       return error(200, -32601, "This read-only MCP method is not available.");
     }
+    const grant = await automationGrant(key);
     const handler = createMcpHandler(
       () => {
         const server = new McpServer(
@@ -213,6 +217,80 @@ export async function handleMcp(req: Request) {
             },
           );
         }
+        if (grant)
+          for (const tool of mcpAutomationTools) {
+            server.registerTool(
+              tool.name,
+              {
+                title: tool.title,
+                description: tool.description,
+                inputSchema: tool.schema,
+                annotations: {
+                  readOnlyHint: tool.readOnly,
+                  destructiveHint: false,
+                  idempotentHint: true,
+                  openWorldHint: false,
+                },
+              },
+              async (args: unknown) => {
+                try {
+                  const input = tool.schema.parse(args),
+                    path = tool.path(input);
+                  const response = await automationApi(
+                    new Request(
+                      "http://automation.internal/api/" + path.join("/"),
+                      {
+                        method: tool.method,
+                        ...(tool.method === "POST"
+                          ? {
+                              headers: { "content-type": "application/json" },
+                              body: JSON.stringify(input),
+                            }
+                          : {}),
+                      },
+                    ),
+                    path,
+                    key,
+                  );
+                  const data = await response.json();
+                  return {
+                    content: [
+                      { type: "text" as const, text: JSON.stringify(data) },
+                    ],
+                    structuredContent: data,
+                  };
+                } catch (e) {
+                  const status =
+                    e instanceof HttpError
+                      ? e.status
+                      : e instanceof ZodError
+                        ? 400
+                        : 500;
+                  return {
+                    isError: true,
+                    content: [
+                      {
+                        type: "text" as const,
+                        text: JSON.stringify({
+                          error: {
+                            code:
+                              status === 500
+                                ? "internal_error"
+                                : "request_failed",
+                            message:
+                              status === 500
+                                ? "The change request could not be completed."
+                                : (e as Error).message,
+                            requestId,
+                          },
+                        }),
+                      },
+                    ],
+                  };
+                }
+              },
+            );
+          }
         return server;
       },
       {

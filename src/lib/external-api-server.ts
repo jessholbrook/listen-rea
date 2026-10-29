@@ -1,3 +1,4 @@
+import { automationApi } from "./study-automation-server";
 import { randomUUID } from "node:crypto";
 import { ZodError } from "zod";
 import { HttpError, fail } from "./http";
@@ -14,6 +15,11 @@ export async function externalApi(req: Request, p: string[]) {
   const json = (data: unknown, status = 200) =>
     Response.json(data, { status, headers });
   try {
+    if (p[0] === "automation") {
+      const key = await authenticateReadKey(req, headers);
+      const response = await automationApi(req, p.slice(1), key);
+      return json(await response.json(), response.status);
+    }
     if (req.method !== "GET") {
       headers.Allow = "GET";
       fail(405, "This API supports GET requests only.");
@@ -31,6 +37,9 @@ export async function externalApi(req: Request, p: string[]) {
       403: "insufficient_scope",
       404: "not_found",
       405: "method_not_allowed",
+      409: "conflict",
+      410: "gone",
+      413: "payload_too_large",
       429: "rate_limited",
       500: "internal_error",
     };
