@@ -20,6 +20,25 @@ export async function queueRenderDeletion(
   }
 }
 export async function clearReporting(s: Study) {
+  const cfg = await db
+    .prepare(
+      "SELECT data FROM documents WHERE kind='prolificConfig' AND id=? AND workspace_id=?",
+    )
+    .get(s.id, s.workspaceId);
+  if (cfg) {
+    const c = JSON.parse(String(cfg.data));
+    await put("prolificConfig", {
+      ...c,
+      admissionsEnabled: false,
+      quote: undefined,
+      version: c.version + 1,
+    });
+  }
+  await db
+    .prepare(
+      "DELETE FROM documents WHERE kind='prolificSubmission' AND workspace_id=? AND study_id=?",
+    )
+    .run(s.workspaceId, s.id);
   const clipIds = new Set(
     (await list<MediaClip>("mediaClip", s.workspaceId, s.id)).map((c) => c.id),
   );

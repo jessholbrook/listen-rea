@@ -1,3 +1,4 @@
+import { runProlificWake } from "@/lib/prolific-queue";
 import { closeRealtime } from "@/lib/realtime-server";
 import { handleCallback } from "@vercel/queue";
 import { z } from "zod";
@@ -18,6 +19,18 @@ export const POST = handleCallback(
       .safeParse(payload);
     if (expiry.success) {
       await closeRealtime(expiry.data.realtimeId);
+      return;
+    }
+    const prolific = z
+      .object({
+        action: z.literal("syncProlific"),
+        studyId: z.uuid(),
+        generation: z.string().min(1).max(64),
+      })
+      .strict()
+      .safeParse(payload);
+    if (prolific.success) {
+      await runProlificWake(prolific.data.studyId, prolific.data.generation);
       return;
     }
     const parsed = message.safeParse(payload);

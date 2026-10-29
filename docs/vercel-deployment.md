@@ -1417,3 +1417,25 @@ Six hosted groups pass on the exact candidate:
 Private verification environment/state files were removed. Independent private Blob checks show **0 files / 0 B**. The project API confirms enabled daily maintenance (`0 5 * * *`) on this exact deployment; no new scheduled firing observation is claimed.
 
 Jess chose automation first because no panel/payout accounts exist yet. Actual provider connections, autonomous execution beyond reviewed requests, recruitment spending and payouts remain unimplemented. Next proposed approval: **provider selection and a concrete recruitment/payout integration plan**. Human pilot and domain-dependent live email remain deferred.
+
+
+## Reviewed Prolific recruitment — October 29, 2026 (America/Los_Angeles)
+
+Promoted verified candidate `dpl_FWu3R4m15uCigXeGbjmoHyuKBhTS` ([immutable deployment](https://echo-8jm8rgn1s-jessholbrook-gmailcoms-projects.vercel.app)) to https://echo-lab-psi.vercel.app. The main URL resolves to that exact Ready deployment; `/api/health` returns `ok:true` and `aiConfigured:true`. Production is **unconnected to Prolific, with paid launch disabled**. No provider credentials were added and no recruitment or payment was made.
+
+The Fielding panel now supports reviewed plans, unpublished provider drafts, separate test/paid enablement, fresh projected-cost checks, durable operation receipts and manual resolution of uncertain outcomes. Native participant handoff binds all three Prolific identifiers, reserves reviewed cohort capacity and preserves completion returns after admission holds. Read-only reconciliation separates provider status/payment from research inclusion and identity matching. Signed webhook receipts feed the existing durable queue/daily maintenance; source erasure holds admissions, clears identifier/roster copies and prevents late replay. See [setup, contract and limits](prolific-recruitment.md).
+
+Validation: production build, standalone TypeScript, formatting and **618/618 compiled automated tests** pass (zero skipped), including nine new connector/worker cases. The new Prolific desktop/mobile browser workflow and existing Qualtrics, Rally and Decipher browser regressions pass. Provider responses in these tests are marked fixtures, not actual account traffic.
+
+Six hosted groups pass on the exact candidate:
+
+- Reviewed plans save without credentials; ordinary fielding never enables Prolific, and unconfigured create/test/paid actions stop before provider dispatch.
+- Anonymous/non-admin mutations are denied; absent webhook secrets and missing scheduled-maintenance authentication fail closed.
+- Native three-ID handoff, interview recovery and completion return after a local hold use an explicitly marked cached-provider fixture. This does not verify real vendor identity or compatibility.
+- A marked cached roster separates ID matching, research exclusion, provider status, reported pending payment and review deadlines; private CSV excludes answer text. Actual provider sync remains unavailable without credentials.
+- Source erasure removes identifier/roster copies, holds admissions, invalidates quotes and rejects replay.
+- Complete synthetic workspace/source/session cleanup preserves the existing user count and exact paused-pilot document. Zero actual Prolific, model, recruitment, payment or email operations were used.
+
+Independent private Blob inspection confirms **0 files / 0 B**. Private verification environment/state files were removed. The project API confirms daily maintenance enabled at `0 5 * * *` on this exact deployment; no future scheduled firing or real provider-backed queue run is claimed.
+
+Actual Prolific API/account compatibility and no-credit test entitlement remain unvalidated until an account is connected. Initial recruitment scope is general eligible panel, desktop, USD/GBP and no in-interview screen-outs. Next proposed approval: **Tremendous reward links for our own invitees, sandbox-only by default**. Human pilot and domain-dependent live email remain deferred.

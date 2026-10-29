@@ -1,5 +1,6 @@
 "use client";
 import AutomationPanel from "./automation-panel";
+import ProlificPanel from "./prolific-panel";
 import PrivatePPTX from "./private-pptx";
 import PPTXTextPanel from "./pptx-text-panel";
 import PrivateDOCX from "./private-docx";
@@ -2161,6 +2162,7 @@ function Fielding({
           completed interview. Screen-outs release their place.
         </p>
       </section>
+      <ProlificPanel key={s.id + ":prolific"} studyId={s.id} />
       <InvitationEmailPanel
         key={"email:" + s.id}
         studyId={s.id}
