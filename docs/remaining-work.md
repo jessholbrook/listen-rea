@@ -22,4 +22,6 @@ Completed: [Richer interviewing and task measures](richer-interviewing.md) — o
 
 Completed: [Reviewed study automation](study-automation.md) — separately enabled static-key draft reads and REST/MCP change requests, admin inspection/application, create/edit/publish/fielding lifecycle, actor attribution, freshness checks and erasure-safe retry receipts. Jess confirmed no provider accounts yet and chose automation first.
 
-Recommended next approval: **Provider selection and recruitment/payout integration planning**. Actual provider connections, spending and payouts remain unimplemented.
+Completed planning: [Recruitment and payout provider comparison](provider-integration-plan.md) recommends Prolific first for general-audience recruitment with vendor-managed compensation, then Tremendous reward links for our own invitees. It compares specialist alternatives, costs, access requirements and concrete build/acceptance criteria. No provider account or live recruitment/payout was created.
+
+Recommended next approval: **Prolific recruitment connector** — participant handoff, reviewed provider drafts, budget/launch controls and submission reconciliation, with paid launch disabled by default. Local contract fixtures can be built before account setup; actual provider testing requires credentials and confirmation of no-credit test access. Tremendous payouts follow as a separate milestone.

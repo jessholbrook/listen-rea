@@ -146,3 +146,5 @@ Remaining engineering bundles and deferred validation are summarized in [remaini
 [Reporting and media expansion](docs/reporting-media-expansion.md) adds reviewed AI clip suggestions, source-labelled cross-study reels and private static PPTX imports with appended reviewed report slides. See the contract for supported formats, review steps and validation limits.
 
 [Reviewed study automation](docs/study-automation.md) lets explicitly enabled static keys read selected drafts and submit REST/MCP create/edit/publish/fielding requests for admin inspection and application. Existing keys and OAuth connections retain their current read access by default.
+
+[Recruitment and payout integration plan](docs/provider-integration-plan.md): Prolific is the proposed first recruitment connector; Tremendous reward links follow for our own invitees. Both remain unconnected pending implementation and account setup.
