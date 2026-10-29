@@ -29,7 +29,13 @@ const config: NextConfig = {
   },
   // Local Vercel builds must not trace private local state or downloaded test fixtures.
   outputFileTracingExcludes: {
-    "/*": ["./.data/**/*", "./.env*", "./test-results/**/*", "./.vercel/**/*"],
+    "/*": [
+      "./.data/**/*",
+      "./.env*",
+      "./test-results/**/*",
+      "./tests/**/*",
+      "./.vercel/**/*",
+    ],
   },
   experimental: { cpus: 2 },
   async headers() {

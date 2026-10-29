@@ -150,3 +150,5 @@ Remaining engineering bundles and deferred validation are summarized in [remaini
 [Recruitment and payout integration plan](docs/provider-integration-plan.md): Prolific is the proposed first recruitment connector; Tremendous reward links follow for our own invitees. Both remain unconnected pending implementation and account setup.
 
 [Prolific recruitment connector](docs/prolific-recruitment.md) adds reviewed provider drafts, guarded test/paid launch, participant handoff and submission reconciliation. It is unconnected in production and paid launch is disabled by default; real vendor account/testing validation remains outstanding.
+
+[Tremendous sandbox reward links](docs/tremendous-sandbox.md) extend approved incentives for our own invitees. Sandbox orders do not pay real incentives; live payouts are unavailable.

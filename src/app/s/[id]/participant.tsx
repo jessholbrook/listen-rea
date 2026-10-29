@@ -1,4 +1,5 @@
 "use client";
+import ParticipantSandboxReward from "../../participant-sandbox-reward";
 import ParticipantPPTXUpload from "../../participant-pptx-upload";
 import DOCXPromptCitation from "../../docx-prompt-citation";
 import PPTXPromptCitation from "../../pptx-prompt-citation";
@@ -1268,6 +1269,13 @@ export default function Participant({ id }: { id: string }) {
                       "Your answers have been saved. Thanks for taking the time to share your experience.",
                     )}
             </p>
+            {i.status === "complete" && !i.preview && !destination && (
+              <ParticipantSandboxReward
+                interviewId={i.id}
+                token={token}
+                language={language}
+              />
+            )}
             {i.preview && (
               <a href="/" className="button">
                 {t("Back to workspace")} <ArrowRight size={16} />
