@@ -1,4 +1,5 @@
 "use client";
+import PulseSchedulePanel from "./pulse-schedule-panel";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/client";
 import type { Study } from "@/lib/domain";
@@ -199,6 +200,11 @@ export default function PulsePanel({
         ) : (
           <>
             <h3>{data.series.name}</h3>
+            <PulseSchedulePanel
+              seriesId={data.series.id}
+              latestDate={data.series.waves.at(-1)!.date}
+              onCreated={() => load()}
+            />
             <p>
               Fixed baseline: {data.series.baseline.questions.length} recurring
               questions · {data.series.baseline.audience}
@@ -240,8 +246,8 @@ export default function PulsePanel({
             </a>
             <p>
               Waves are created as drafts. Review, publish and launch each
-              through Study design and Fielding. Dates are planning metadata;
-              recruitment and scheduling are manual.
+              through Study design and Fielding. A reviewed schedule can create
+              draft waves automatically; recruitment and launch remain manual.
             </p>
             <form
               className="mixed-grid"

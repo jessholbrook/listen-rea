@@ -1,3 +1,4 @@
+import { runPulseSchedules } from "./pulse-schedule-server";
 import { timingSafeEqual, createHash } from "node:crypto";
 import { db, get, list } from "./db";
 import { retention } from "./features";
@@ -43,5 +44,6 @@ export async function backgroundMaintenance(
       "DELETE FROM documents WHERE kind='backgroundJob' AND json_extract(data,'$.state') IN ('complete','cancelled') AND json_extract(data,'$.updatedAt')<?",
     )
     .run(new Date(Date.now() - 7 * 86400000).toISOString());
-  return { ok: true, dispatched, pending };
+  const pulse = await runPulseSchedules();
+  return { ok: true, dispatched, pending, pulse };
 }

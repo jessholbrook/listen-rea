@@ -1,4 +1,5 @@
 "use client";
+import MaxdiffHierarchicalPanel from "./maxdiff-hierarchical-panel";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/client";
 import type { maxdiffResults } from "@/lib/maxdiff-results";
@@ -122,8 +123,9 @@ export default function MaxdiffPanel({
         <p>
           Repeated best/worst choices reveal relative priorities within this
           item list. Descriptive counts and pooled model estimates are shown
-          separately. This release does not implement Hierarchical Bayes,
-          individual utilities or portfolio optimization.
+          separately. Hierarchical Bayesian individual estimates and portfolio
+          tools are available below for supported samples, with sampling
+          diagnostics and explicit review.
         </p>
         <form
           className="mixed-grid"
@@ -194,6 +196,23 @@ export default function MaxdiffPanel({
         return (
           <section className="panel visual-stack" key={r.sourceFingerprint}>
             <h3>{r.prompt}</h3>
+            <MaxdiffHierarchicalPanel
+              root={root}
+              query={query}
+              scope={{
+                revisionId: r.revisionId,
+                questionId: r.questionId,
+                conceptId: r.conceptId,
+                sourceFingerprint: r.sourceFingerprint,
+              }}
+              respondents={r.counts.included}
+              items={r.items.length}
+              tasks={r.counts.tasks}
+              inspect={(id) => {
+                const o = r.outcomes.find((o) => o.interviewId === id);
+                if (o) void inspect(o);
+              }}
+            />
             <p className="small mono">
               Revision {r.revisionId} · Question {r.questionId}
               {r.conceptId && ` · Concept ${r.conceptId}`}

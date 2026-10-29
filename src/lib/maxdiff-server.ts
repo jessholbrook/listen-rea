@@ -1,3 +1,4 @@
+import { hierarchicalRequest } from "./maxdiff-hierarchical-server";
 import { z } from "zod";
 import { actor, canEdit, body, respond, fail, limit } from "./http";
 import { requireStudy, interviews, hash, now } from "./db";
@@ -35,6 +36,8 @@ export async function dispatchMaxdiff(req: Request, p: string[]) {
           })
           .parse({ key, value })
       : undefined;
+  const hierarchical = await hierarchicalRequest(req, p, a, s, attribute);
+  if (hierarchical) return hierarchical;
   const results = maxdiffResults(await interviews(s), attribute),
     fingerprint = (r: (typeof results)[number]) =>
       hash(

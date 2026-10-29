@@ -360,6 +360,42 @@ export default function Participant({ id }: { id: string }) {
     version: number;
     serialized: string;
   } | null>(null);
+  const categoryRequest = useRef<{ key: string; id: string } | null>(null);
+  async function manageSortGroups(input: {
+    op: "add" | "rename" | "remove";
+    id?: string;
+    text?: string;
+  }) {
+    if (!i) return;
+    setBusy(true);
+    setError("");
+    try {
+      const assignments = cardsortFormAssignments(i.cardsortPrompt, value),
+        key = JSON.stringify([i.version, input, assignments]);
+      if (categoryRequest.current?.key !== key)
+        categoryRequest.current = { key, id: crypto.randomUUID() };
+      const r = await api(
+        "interviews/" + i.id + "/cardsort-groups",
+        "POST",
+        {
+          ...input,
+          assignments,
+          version: i.version,
+          requestId: categoryRequest.current.id,
+        },
+        { "x-interview-token": token },
+      );
+      setI(r.interview);
+      setValue(undefined);
+      setSortDraftSaved(true);
+      categoryRequest.current = null;
+    } catch (e) {
+      setError((e as Error).message);
+      throw e;
+    } finally {
+      setBusy(false);
+    }
+  }
   async function saveCardsortDraft() {
     if (!i) return;
     setBusy(true);
@@ -826,6 +862,7 @@ export default function Participant({ id }: { id: string }) {
                               }}
                               disabled={busy}
                               saveDraft={() => void saveCardsortDraft()}
+                              manageGroups={manageSortGroups}
                             />
                           </>
                         )

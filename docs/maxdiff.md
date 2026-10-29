@@ -28,7 +28,7 @@ The objective is negative log likelihood plus `0.5 × Σ(u²)` (fixed ridge stre
 
 The displayed **relative preference score** is `100 × exp(u[item]) / Σ exp(u)`, summing to 100 across this configured list. It is a utility transformation, not the probability of selecting the item best under the joint best–worst model, a market share, or a purchase probability. Scores cannot be compared directly across different lists/revisions or against Listen’s HB index.
 
-The [Listen Labs documentation](https://docs.listenlabs.com/insights-and-reports/max-diff-questions) describes respondent-level Hierarchical Bayes utilities and an index whose average item equals 100. Echo Lab’s pooled fit and sum-to-100 transformation deliberately use different labels. **HB estimation, individual-level preferences and portfolio optimization remain later work.**
+The [Listen Labs documentation](https://docs.listenlabs.com/insights-and-reports/max-diff-questions) describes respondent-level Hierarchical Bayes utilities and an index whose average item equals 100. Echo Lab’s pooled fit and sum-to-100 transformation deliberately use different labels. An additional experimental [hierarchical model and portfolio workflow](advanced-research-methods.md) now estimates respondent-level preferences under a separate isotropic normal hierarchy. The pooled method described here remains available and unchanged.
 
 ## Uncertainty and reproducibility
 

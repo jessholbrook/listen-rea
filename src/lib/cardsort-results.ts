@@ -2,6 +2,8 @@ import type { Interview, Question } from "./domain";
 import {
   cardsortState,
   cardsortVersion,
+  cardsortMethod,
+  validateCustomGroups,
   validateAssignments,
   type CardAssignment,
 } from "./cardsort";
@@ -37,10 +39,12 @@ export function cardsortResults(
     const outcomes = members.map((i) => {
       const s = cardsortState(i, q);
       let valid = false;
-      if (s && s.version === cardsortVersion) {
+      if (s && s.version === cardsortMethod(c)) {
         try {
-          validateAssignments(c, s.draft, false);
-          if (s.phase !== "sort") validateAssignments(c, s.assignments, true);
+          validateCustomGroups(c, s.customGroups || []);
+          validateAssignments(c, s.draft, false, s.customGroups);
+          if (s.phase !== "sort")
+            validateAssignments(c, s.assignments, true, s.customGroups);
           valid = true;
         } catch {}
       }
@@ -57,6 +61,7 @@ export function cardsortResults(
         assignments: s?.assignments || [],
         draft: s?.draft || [],
         reason: s?.reason || "",
+        customGroups: s?.customGroups || [],
         turns: i.turns
           .filter((t) => t.questionId === q.id && t.cardsort)
           .map((t) => ({ id: t.id, phase: t.cardsort!.phase })),
@@ -72,6 +77,10 @@ export function cardsortResults(
         ...card,
         denominator,
         uncertain: answers.filter((x) => x.groupId === null).length,
+        custom: answers.filter(
+          (x) =>
+            x.groupId !== null && !c.groups.some((g) => g.id === x.groupId),
+        ).length,
         groups: c.groups.map((group) => {
           const count = answers.filter((x) => x.groupId === group.id).length;
           return {
@@ -109,7 +118,7 @@ export function cardsortResults(
       conceptId: q.conceptId || null,
       prompt: q.text,
       config: c,
-      version: cardsortVersion,
+      version: cardsortMethod(c),
       counts: {
         total: members.length,
         included: denominator,
