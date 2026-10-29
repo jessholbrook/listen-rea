@@ -14,6 +14,7 @@ export async function start(
     port?: number;
     restrict?: boolean;
     email?: boolean;
+    notifications?: boolean;
   } = {},
 ) {
   base = "http://127.0.0.1:" + (options.port || 3101);
@@ -60,6 +61,12 @@ export async function start(
         RESEARCH_EMAIL_FROM: options.email ? "research@example.test" : "",
         RESEARCH_EMAIL_REPLY_TO: options.email ? "reply@example.test" : "",
         RESEARCH_PUBLIC_URL: options.email ? base : "",
+        RESEARCH_NOTIFICATION_ENCRYPTION_KEY: options.notifications
+          ? Buffer.alloc(32, 11).toString("base64")
+          : "",
+        RESEARCH_NOTIFICATION_ALLOWED_ORIGINS: options.notifications
+          ? "https://receiver.example.com"
+          : "",
         RESEARCH_EMAIL_ENCRYPTION_KEY: options.email
           ? Buffer.alloc(32, 7).toString("base64")
           : "",

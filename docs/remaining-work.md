@@ -32,4 +32,6 @@ Provider connection readiness and guided sandbox/no-credit validation are deferr
 
 Completed engineering: [Delegated draft automation](delegated-draft-automation.md) — separate admin opt-in for trusted static keys to execute private draft creation/editing through REST/MCP, selected-study/operation boundaries, rolling limits, fresh role/permission/source checks, attributed execution/permission history, exact retry receipts and immediate disable. Publication, fielding and provider actions retain their existing review requirements.
 
-Recommended next approval: **Reliable integration change notifications** — signed study/response event notifications, bounded payloads, a delivery/retry log and revocation/source-erasure controls. This is a proposed deeper-synchronization bundle and does not require a new provider account.
+Completed engineering: [Signed integration notifications](integration-notifications.md) — scoped metadata events, disabled-by-default verified destinations, encrypted signing keys, durable transactional outbox, native queue retries, delivery logs, immediate revocation and source-erasure controls. No real external destination is enabled by default.
+
+Recommended next approval: **Integration reconciliation and catch-up tooling** for missed notifications, bounded-history gaps and sources that have become unavailable, with current selected-study permissions. This is a proposed deeper-synchronization bundle and does not require a new provider account.

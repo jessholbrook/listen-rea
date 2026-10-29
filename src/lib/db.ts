@@ -1,3 +1,4 @@
+import { captureNotifications } from "./notification-store";
 import {
   libraryReviewKinds,
   libraryTextKinds,
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS usage(id TEXT PRIMARY KEY,workspace_id TEXT NOT NULL,
 CREATE TABLE IF NOT EXISTS invites(hash TEXT PRIMARY KEY,workspace_id TEXT NOT NULL,role TEXT NOT NULL,expires INTEGER NOT NULL);
 `;
 const context = new AsyncLocalStorage<Transaction>();
+const notificationWork = new AsyncLocalStorage<Set<string>>();
 let initializing: Promise<Client> | undefined;
 export function remoteDatabaseUrl(value: string) {
   const parsed = new URL(value.replace(/^libsql:/, "https:"));
@@ -154,8 +156,24 @@ export async function put<
     kind === "study" ||
     Object.hasOwn(libraryReviewKinds, kind) ||
     Object.hasOwn(libraryTextKinds, kind);
-  if (tracked && !context.getStore())
+  const notifiable = ["study", "interview", "backgroundJob"].includes(kind);
+  if ((tracked || notifiable) && !context.getStore())
     return transaction(() => put(kind, value));
+  let notificationBefore: unknown;
+  const notificationEndpoints = notifiable
+    ? await list<import("./integration-notifications").NotificationEndpoint>(
+        "notificationEndpoint",
+        value.workspaceId,
+      )
+    : [];
+  if (notifiable && notificationEndpoints.length) {
+    const row = await db
+      .prepare(
+        "SELECT data FROM documents WHERE kind=? AND id=? AND workspace_id=?",
+      )
+      .get(kind, value.id, value.workspaceId);
+    notificationBefore = row ? JSON.parse(String(row.data)) : undefined;
+  }
   let previous: unknown;
   if (tracked) {
     const field =
@@ -182,6 +200,16 @@ export async function put<
       value.studyId || value.id,
       JSON.stringify(value),
     );
+  if (
+    notificationEndpoints.length &&
+    (await captureNotifications(
+      kind,
+      notificationBefore,
+      value,
+      notificationEndpoints,
+    ))
+  )
+    notificationWork.getStore()?.add(value.workspaceId);
   for (const removal of librarySourceChanges(kind, previous, value))
     await clearLibraryAnswers(value.workspaceId, removal);
   if (
@@ -254,13 +282,14 @@ export async function list<T>(
 }
 export async function transaction<T>(fn: () => Promise<T>): Promise<T> {
   if (context.getStore()) return fn();
-  return serialized(async () => {
-    const client = await database();
-    const tx = await client.transaction("write");
+  const result = await serialized(async () => {
+    const client = await database(),
+      tx = await client.transaction("write"),
+      work = new Set<string>();
     try {
-      const value = await context.run(tx, fn);
+      const value = await context.run(tx, () => notificationWork.run(work, fn));
       await tx.commit();
-      return value;
+      return { value, work };
     } catch (e) {
       await tx.rollback();
       throw e;
@@ -268,6 +297,15 @@ export async function transaction<T>(fn: () => Promise<T>): Promise<T> {
       tx.close();
     }
   });
+  // Publish outside the serialized transaction queue: dispatch must never deadlock or roll back a committed source change.
+  for (const workspaceId of result.work)
+    try {
+      const { publishNotificationWake } = await import("./notification-queue");
+      await publishNotificationWake(workspaceId);
+    } catch {
+      /* Durable wake remains for explicit dispatch/daily maintenance. */
+    }
+  return result.value;
 }
 export function passwordHash(password: string) {
   const salt = token();

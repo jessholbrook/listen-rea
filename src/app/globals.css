@@ -3876,3 +3876,38 @@ tr:last-child td {
 .automation-panel .button {
   max-width: 100%;
 }
+
+.notification-panel,
+.notification-panel .visual-stack {
+  grid-template-columns: minmax(0, 1fr);
+  overflow-wrap: anywhere;
+}
+.notification-panel :is(article, fieldset, label, details, pre) {
+  min-width: 0;
+  max-width: 100%;
+}
+.notification-panel fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.notification-panel .checkbox-label {
+  white-space: normal;
+  align-items: flex-start;
+  font-size: 12px;
+  gap: 8px;
+}
+.notification-panel .checkbox-label input {
+  flex: 0 0 14px;
+  width: 14px;
+  margin-top: 3px;
+}
+.notification-panel .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.notification-panel .button {
+  max-width: 100%;
+  white-space: normal;
+}

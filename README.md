@@ -154,3 +154,5 @@ Remaining engineering bundles and deferred validation are summarized in [remaini
 [Tremendous sandbox reward links](docs/tremendous-sandbox.md) extend approved incentives for our own invitees. Sandbox orders do not pay real incentives; live payouts are unavailable.
 
 [Delegated draft automation](docs/delegated-draft-automation.md) lets explicitly authorized static integrations create/edit private drafts under admin-selected operations, study scope and rolling limits. Publication and fielding retain their reviewed workflow.
+
+[Signed integration notifications](docs/integration-notifications.md) add disabled-by-default metadata destinations, receiver verification, durable queued delivery/retries, key rotation and private delivery logs.
