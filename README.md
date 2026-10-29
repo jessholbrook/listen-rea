@@ -158,3 +158,5 @@ Remaining engineering bundles and deferred validation are summarized in [remaini
 [Signed integration notifications](docs/integration-notifications.md) add disabled-by-default metadata destinations, receiver verification, durable queued delivery/retries, key rotation and private delivery logs.
 
 [Integration recovery](docs/integration-reconciliation.md) adds separately enabled static-key inventories, resumable checkpoints and stateless source-availability checks for catching up after missed notifications.
+
+[Integration client and recovery example](docs/integration-client.md) provides a server-side TypeScript client and an account-free `npm run integration:demo` for durable catch-up, signed wake-up deduplication and unavailable-source removal into a disposable local destination.
