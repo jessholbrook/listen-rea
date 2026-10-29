@@ -1,3 +1,4 @@
+import { reconciliationApi } from "./reconciliation-server";
 import { automationApi } from "./study-automation-server";
 import { randomUUID } from "node:crypto";
 import { ZodError } from "zod";
@@ -15,6 +16,11 @@ export async function externalApi(req: Request, p: string[]) {
   const json = (data: unknown, status = 200) =>
     Response.json(data, { status, headers });
   try {
+    if (p[0] === "reconciliation") {
+      const key = await authenticateReadKey(req, headers);
+      const response = await reconciliationApi(req, p.slice(1), key);
+      return json(await response.json(), response.status);
+    }
     if (p[0] === "automation") {
       const key = await authenticateReadKey(req, headers);
       const response = await automationApi(req, p.slice(1), key);

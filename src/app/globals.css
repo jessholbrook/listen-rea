@@ -3911,3 +3911,30 @@ tr:last-child td {
   max-width: 100%;
   white-space: normal;
 }
+
+.reconciliation-panel,
+.reconciliation-panel > *,
+.reconciliation-panel article {
+  min-width: 0;
+}
+.reconciliation-panel code {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.reconciliation-panel label {
+  display: flex;
+  gap: 0.6rem;
+  align-items: start;
+  overflow-wrap: anywhere;
+}
+.reconciliation-panel input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: auto;
+}
+.reconciliation-panel input[type="number"] {
+  width: 5rem;
+  max-width: 100%;
+}
+.reconciliation-panel .actions {
+  flex-wrap: wrap;
+}

@@ -34,4 +34,6 @@ Completed engineering: [Delegated draft automation](delegated-draft-automation.m
 
 Completed engineering: [Signed integration notifications](integration-notifications.md) — scoped metadata events, disabled-by-default verified destinations, encrypted signing keys, durable transactional outbox, native queue retries, delivery logs, immediate revocation and source-erasure controls. No real external destination is enabled by default.
 
-Recommended next approval: **Integration reconciliation and catch-up tooling** for missed notifications, bounded-history gaps and sources that have become unavailable, with current selected-study permissions. This is a proposed deeper-synchronization bundle and does not require a new provider account.
+Completed engineering: [Integration reconciliation and catch-up tooling](integration-reconciliation.md) — separate default-off static-key grants, bounded current-source inventories, fresh-page checkpoints, drift/rescan detection, transient bulk availability checks, erasure-safe progress and admin controls. Completion records client confirmation; Echo Lab cannot verify an external copy.
+
+Recommended next approval: **Reusable integration client and recovery example** — a small typed client and runnable reference sync that demonstrates signed notification handling, paged catch-up, safe retries and unavailable-source removal against a disposable destination. This makes the integration APIs easier to adopt without a provider account; external production destinations still require explicit configuration.
